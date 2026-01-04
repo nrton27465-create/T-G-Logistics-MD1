@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
+        .container { max-width: 800px; margin-top: 30px; }
+        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .nav-pills .nav-link.active { background-color: #0d6efd; }
+        .score-total { font-size: 1.5rem; font-weight: bold; color: #0d6efd; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 class="text-center mb-4">T&G LOGISTICS-MD 1</h2>
+    
+    <ul class="nav nav-pills nav-fill mb-4" id="pills-tab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#todo-page">To do list</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#round1-page">1st Round</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#round2-page">2nd Round</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="todo-page">
+            <div class="card p-4">
+                <h5>ชื่อกิจการ</h5>
+                <select class="form-select mb-4 company-select"></select>
+                <hr>
+                <h5>รายการตรวจสอบ</h5>
+                <div id="todo-container" class="mb-4"></div>
+                <button class="btn btn-primary w-100" onclick="submitTodo()">บันทึกข้อมูล</button>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="round1-page">
+            <div class="card p-4">
+                <h5>ชื่อกิจการ</h5>
+                <select class="form-select mb-4 company-select"></select>
+                <table class="table">
+                    <thead><tr><th>หัวข้อ</th><th width="150px">คะแนน</th></tr></thead>
+                    <tbody id="round1-table"></tbody>
+                </table>
+                <div class="text-end mb-3">คะแนนรวม: <span class="score-total" id="total1">0</span></div>
+                <button class="btn btn-success w-100" onclick="submitRound('1st')">บันทึก 1st Round</button>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="round2-page">
+            <div class="card p-4">
+                <h5>ชื่อกิจการ</h5>
+                <select class="form-select mb-4 company-select"></select>
+                <table class="table">
+                    <thead><tr><th>หัวข้อ</th><th width="150px">คะแนน</th></tr></thead>
+                    <tbody id="round2-table"></tbody>
+                </table>
+                <div class="text-end mb-3">คะแนนรวม: <span class="score-total" id="total2">0</span></div>
+                <button class="btn btn-info text-white w-100" onclick="submitRound('2nd')">บันทึก 2nd Round</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let appData = {};
+
+    // โหลดข้อมูลเริ่มต้น
+    window.onload = () => {
+        google.script.run.withSuccessHandler(init).getInitialData();
+    };
+
+    function init(data) {
+        appData = data;
+        renderInputs();
+    }
+
+    function renderInputs() {
+        // Render Company Dropdown
+        document.querySelectorAll('.company-select').forEach(sel => {
+            sel.innerHTML = appData.companies.map(c => `<option value="${c}">${c}</option>`).join('');
+        });
+
+        // Render Todo List
+        document.getElementById('todo-container').innerHTML = appData.todoItems.map((item, i) => `
+            <div class="form-check mb-2">
+                <input class="form-check-input todo-chk" type="checkbox" value="${item}" id="todo${i}">
+                <label class="form-check-label" for="todo${i}">${item}</label>
+            </div>
+        `).join('');
+
+        // Render Tables
+        renderTable('round1-table', appData.round1Heads, '1st');
+        renderTable('round2-table', appData.round2Heads, '2nd');
+    }
+
+    function renderTable(tableId, headers, round) {
+        const tbody = document.getElementById(tableId);
+        tbody.innerHTML = headers.map((h, i) => `
+            <tr>
+                <td>${h}</td>
+                <td>
+                    <select class="form-select score-input" onchange="calcTotal('${round}')" data-head="${h}">
+                        ${[...Array(10).keys()].map(n => `<option value="${n+1}" ${n+1===10 ? 'selected':''}>${n+1}</option>`).join('')}
+                    </select>
+                </td>
+            </tr>
+        `).join('');
+        calcTotal(round);
+    }
+
+    function calcTotal(round) {
+        const id = round === '1st' ? 'round1-table' : 'round2-table';
+        const totalId = round === '1st' ? 'total1' : 'total2';
+        let sum = 0;
+        document.querySelectorAll(`#${id} .score-input`).forEach(s => sum += parseInt(s.value));
+        document.getElementById(totalId).innerText = sum;
+    }
+
+    function submitTodo() {
+        const company = document.querySelector('#todo-page .company-select').value;
+        const checks = [];
+        document.querySelectorAll('.todo-chk').forEach(chk => {
+            checks.push({ item: chk.value, done: chk.checked });
+        });
+
+        google.script.run.withSuccessHandler(() => {
+            alert('บันทึกสำเร็จ!');
+            renderInputs(); // ล้างข้อมูลโดยการ render ใหม่
+        }).saveData('todo', company, checks);
+    }
+
+    function submitRound(round) {
+        const pageId = round === '1st' ? '#round1-page' : '#round2-page';
+        const tableId = round === '1st' ? 'round1-table' : 'round2-table';
+        const company = document.querySelector(`${pageId} .company-select`).value;
+        const scores = [];
+        
+        document.querySelectorAll(`#${tableId} .score-input`).forEach(s => {
+            scores.push({ head: s.dataset.head, score: s.value });
+        });
+
+        google.script.run.withSuccessHandler(() => {
+            alert('บันทึกคะแนนสำเร็จ!');
+            renderInputs();
+        }).saveData(round, company, scores);
+    }
+</script>
+</body>
+</html>
