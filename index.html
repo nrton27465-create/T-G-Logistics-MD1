@@ -2,55 +2,536 @@
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Transport - Driver</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>🚚 Driver App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
-    body { background:#0b1020; color:#e5edff; }
-    .card { background:#121936; border:0; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
-    .badge { font-size:.9rem; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace; }
-    .btn-primary { background:#5b7cff; border:0; }
-    .small-muted { color:#9fb0ff; }
+    :root {
+      --blue-900: #03174a;
+      --blue-800: #052d8a;
+      --blue-700: #0a3fb5;
+      --blue-600: #1a5cd8;
+      --blue-500: #2e7cf6;
+      --blue-400: #5b9eff;
+      --blue-300: #93c0ff;
+      --blue-200: #c8dfff;
+      --blue-100: #e8f1ff;
+      --white:    #ffffff;
+      --surface:  #f0f5ff;
+      --text-primary: #03174a;
+      --text-muted:   #4a6fa8;
+      --radius-sm: 12px;
+      --radius-md: 20px;
+      --radius-lg: 28px;
+      --shadow-sm: 0 2px 8px rgba(3,23,74,.10);
+      --shadow-md: 0 6px 24px rgba(3,23,74,.14);
+      --shadow-lg: 0 12px 48px rgba(3,23,74,.18);
+      --fs-xs:  28px;
+      --fs-sm:  32px;
+      --fs-md:  36px;
+      --fs-lg:  40px;
+      --fs-xl:  46px;
+      --fs-2xl: 54px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: var(--surface);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* ─── HEADER ─── */
+    .app-header {
+      background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-700) 100%);
+      padding: env(safe-area-inset-top, 0) 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 20px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      background: rgba(255,255,255,.15);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      backdrop-filter: blur(8px);
+    }
+
+    .header-title {
+      font-size: var(--fs-lg);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+
+    .header-sub {
+      font-size: var(--fs-xs);
+      color: var(--blue-300);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .btn-refresh {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.12);
+      border: 1.5px solid rgba(255,255,255,.25);
+      color: white;
+      font-size: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .2s;
+      backdrop-filter: blur(8px);
+      flex-shrink: 0;
+    }
+    .btn-refresh:active { transform: scale(.9); background: rgba(255,255,255,.22); }
+
+    /* ─── MAIN CONTENT ─── */
+    .main {
+      padding: 24px 20px;
+      max-width: 640px;
+      margin: 0 auto;
+      padding-bottom: calc(env(safe-area-inset-bottom, 0) + 32px);
+    }
+
+    /* ─── ALERT ─── */
+    .alert {
+      border-radius: var(--radius-md);
+      padding: 20px 22px;
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      margin-bottom: 24px;
+      line-height: 1.4;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .alert-icon { font-size: var(--fs-md); flex-shrink: 0; margin-top: 2px; }
+    .alert-warning { background: #fff7e0; color: #7a4f00; border: 2px solid #f5c842; }
+    .alert-info    { background: var(--blue-100); color: var(--blue-800); border: 2px solid var(--blue-300); }
+    .alert-danger  { background: #ffe8e8; color: #8b0000; border: 2px solid #ff8080; }
+    .alert-success { background: #e6faf0; color: #0a5c2e; border: 2px solid #4fd494; }
+
+    /* ─── SECTION LABEL ─── */
+    .section-label {
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+    }
+
+    /* ─── CARD ─── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .card-body { padding: 24px; }
+    .card-body + .card-body { border-top: 1.5px solid var(--blue-100); }
+
+    /* ─── FORM ELEMENTS ─── */
+    .form-label {
+      display: block;
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      letter-spacing: .3px;
+    }
+
+    .form-control, .form-select {
+      width: 100%;
+      font-family: 'Sarabun', sans-serif;
+      font-size: var(--fs-md);
+      font-weight: 600;
+      color: var(--text-primary);
+      background: var(--surface);
+      border: 2px solid var(--blue-200);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-appearance: none;
+      appearance: none;
+      line-height: 1.3;
+    }
+    .form-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%231a5cd8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 18px center;
+      background-size: 24px;
+      padding-right: 52px;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--blue-500);
+      box-shadow: 0 0 0 4px rgba(46,124,246,.14);
+      background: white;
+    }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      font-family: 'Sarabun', sans-serif;
+      font-size: var(--fs-md);
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 18px 24px;
+      cursor: pointer;
+      transition: all .18s;
+      letter-spacing: .2px;
+      min-height: 68px;
+      line-height: 1.2;
+    }
+    .btn:active { transform: scale(.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-500) 100%);
+      color: white;
+      box-shadow: 0 4px 20px rgba(46,124,246,.35);
+    }
+    .btn-primary:active { box-shadow: 0 2px 8px rgba(46,124,246,.20); }
+
+    .btn-progress {
+      background: linear-gradient(135deg, #1a8cf0 0%, #0ea5e9 100%);
+      color: white;
+      box-shadow: 0 4px 20px rgba(14,165,233,.32);
+    }
+    .btn-progress:active { box-shadow: 0 2px 8px rgba(14,165,233,.16); }
+
+    .btn-success {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      color: white;
+      box-shadow: 0 4px 20px rgba(16,185,129,.32);
+    }
+    .btn-success:active { box-shadow: 0 2px 8px rgba(16,185,129,.16); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--blue-600);
+      border: 2.5px solid var(--blue-300);
+    }
+    .btn-outline:active { background: var(--blue-100); }
+
+    /* ─── STATUS BADGE ─── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+    .status-badge::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .badge-assigned {
+      background: #e8f0ff;
+      color: var(--blue-700);
+    }
+    .badge-assigned::before { background: var(--blue-500); }
+    .badge-progress {
+      background: #fff3cd;
+      color: #7a4f00;
+    }
+    .badge-progress::before { background: #f59e0b; animation: pulse 1.5s ease-in-out infinite; }
+    .badge-delivered {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .badge-delivered::before { background: #10b981; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(.75); }
+    }
+
+    /* ─── TRIP CARD ─── */
+    .trip-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      margin-bottom: 20px;
+      border: 1.5px solid var(--blue-100);
+      transition: box-shadow .2s;
+    }
+
+    .trip-header {
+      padding: 22px 24px 18px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1.5px solid var(--blue-100);
+    }
+
+    .trip-id {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      color: var(--blue-700);
+      letter-spacing: -.3px;
+      line-height: 1.2;
+    }
+
+    .trip-meta {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .trip-meta-item {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .trip-meta-icon { font-size: 20px; }
+
+    .trip-body {
+      padding: 20px 24px;
+    }
+
+    /* ─── ODO ROW ─── */
+    .odo-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .odo-field { display: flex; flex-direction: column; }
+
+    /* ─── NOTE FIELD ─── */
+    .note-field { margin-bottom: 20px; }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      border: none;
+      border-top: 1.5px solid var(--blue-100);
+      margin: 0 -24px 20px;
+    }
+
+    /* ─── LOADING ─── */
+    .loading-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 0;
+      gap: 20px;
+    }
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border: 5px solid var(--blue-200);
+      border-top-color: var(--blue-500);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+    }
+    .empty-icon { font-size: 72px; margin-bottom: 20px; }
+    .empty-title {
+      font-size: var(--fs-lg);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .empty-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ─── COUNT BADGE ─── */
+    .trip-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue-600);
+      color: white;
+      border-radius: 100px;
+      font-size: var(--fs-xs);
+      font-weight: 800;
+      padding: 4px 14px;
+      margin-left: 10px;
+    }
+
+    /* ─── TOAST NOTIFICATION ─── */
+    .toast-container {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 0) + 24px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+      width: calc(100vw - 48px);
+      max-width: 560px;
+    }
+    .toast {
+      background: var(--blue-900);
+      color: white;
+      border-radius: var(--radius-md);
+      padding: 18px 24px;
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .3s, transform .3s;
+      width: 100%;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.toast-success { background: linear-gradient(135deg, #047857, #059669); }
+    .toast.toast-error   { background: linear-gradient(135deg, #991b1b, #dc2626); }
+
+    /* ─── SECTION HEADER ─── */
+    .section-head {
+      display: flex;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .section-head-title {
+      font-size: var(--fs-md);
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    /* safe area bottom padding */
+    .safe-bottom { height: env(safe-area-inset-bottom, 0); }
   </style>
 </head>
 <body>
-<div class="container py-3">
 
-  <div class="d-flex align-items-center justify-content-between mb-3">
+<!-- ─── HEADER ─── -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="header-icon">🚚</div>
+      <div>
+        <div class="header-title">Driver App</div>
+        <div class="header-sub">ระบบจัดการงานขนส่ง</div>
+      </div>
+    </div>
+    <button class="btn-refresh" onclick="refreshApp()" title="รีเฟรช">↻</button>
+  </div>
+</header>
+
+<!-- ─── MAIN ─── -->
+<main class="main">
+
+  <!-- Config warning (shown only when SCRIPT_URL is not set) -->
+  <div id="configAlert" class="alert alert-warning" style="display:none">
+    <div class="alert-icon">⚠️</div>
     <div>
-      <h4 class="mb-0">🚚 Driver App</h4>
-      <div class="small-muted">รับงาน • อัปเดตสถานะ • กรอกเลขไมล์</div>
-    </div>
-    <button class="btn btn-outline-light btn-sm" onclick="bootstrap()">รีเฟรช</button>
-  </div>
-
-  <div class="alert alert-warning">
-    <div class="fw-bold">ตั้งค่า SCRIPT_URL ก่อนใช้งาน</div>
-    <div class="small">แก้ค่า <span class="mono">SCRIPT_URL</span> ให้เป็นลิงก์ /exec จาก Apps Script</div>
-  </div>
-
-  <div class="card p-3 mb-3">
-    <div class="row g-2 align-items-end">
-      <div class="col-12">
-        <label class="form-label">เลือกชื่อพนักงานขับ</label>
-        <select id="driverId" class="form-select"></select>
-      </div>
-      <div class="col-12">
-        <button class="btn btn-primary w-100" onclick="loadMyTrips()">โหลดงานของฉัน</button>
-      </div>
+      <div style="font-weight:800;margin-bottom:4px;">ยังไม่ได้ตั้งค่า</div>
+      <div>กรุณาแก้ค่า <code>SCRIPT_URL</code> ในโค้ดให้เป็นลิงก์ /exec จาก Apps Script</div>
     </div>
   </div>
 
+  <!-- Driver selector card -->
+  <div class="card">
+    <div class="card-body">
+      <label class="form-label">👤 เลือกชื่อพนักงานขับ</label>
+      <select id="driverId" class="form-select">
+        <option value="">— กำลังโหลดรายชื่อ... —</option>
+      </select>
+    </div>
+    <div class="card-body">
+      <button class="btn btn-primary" onclick="loadMyTrips()">
+        📋 โหลดงานของฉัน
+      </button>
+    </div>
+  </div>
+
+  <!-- Trip list output -->
   <div id="listBox"></div>
 
-</div>
+</main>
+
+<!-- ─── TOAST CONTAINER ─── -->
+<div class="toast-container" id="toastContainer"></div>
 
 <script>
-/** 👉 ใส่ URL /exec ของ Apps Script */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxk2ASGeMK29gzhcFRCtScgn8RL1h0ZDfvzFF8rYdTXorwu45WI_LN1EX-d-QpsGOhBQ/exec";
+/* ═══════════════════════════════════════════════
+   👉  ใส่ URL /exec ของ Apps Script ตรงนี้
+   ═══════════════════════════════════════════════ */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwm3m84gxgShc5zkAzixv1eBLzX5K1r5o3SFgdTa-m_xZYthskiBDb8QBy5p7gbSJDOhg/exec";
 
-/** JSONP helper */
+/* ── DDL Cache ── */
+let DDL = { drivers: [] };
+
+/* ══════════════════════════════
+   JSONP helper
+   ══════════════════════════════ */
 function jsonp(action, params = {}) {
   return new Promise((resolve, reject) => {
     const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -58,111 +539,284 @@ function jsonp(action, params = {}) {
     url.searchParams.set("action", action);
     url.searchParams.set("callback", cb);
     Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+
     const script = document.createElement("script");
     script.src = url.toString();
-    script.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
+    script.onerror = () => { cleanup(); reject(new Error("โหลดข้อมูลไม่ได้ กรุณาตรวจสอบ SCRIPT_URL")); };
+
     window[cb] = (data) => { cleanup(); resolve(data); };
-    function cleanup(){ delete window[cb]; script.remove(); }
+    function cleanup() { delete window[cb]; script.remove(); }
+
     document.body.appendChild(script);
   });
 }
 
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m])); }
-
-let DDL = { drivers:[] };
-
-async function bootstrap() {
-  if (!SCRIPT_URL || SCRIPT_URL.includes("PASTE_")) {
-    alert("กรุณาใส่ SCRIPT_URL ก่อน");
-    return;
-  }
-  const data = await jsonp("bootstrap");
-  if (!data.ok) { alert(data.error || "bootstrap error"); return; }
-  DDL = data.ddl || { drivers:[] };
-  const sel = document.getElementById("driverId");
-  sel.innerHTML = `<option value="">-- เลือกชื่อ --</option>` + DDL.drivers.map(d =>
-    `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)} (${escapeHtml(d.id)})</option>`
-  ).join("");
+/* ══════════════════════════════
+   Escape HTML
+   ══════════════════════════════ */
+function h(s) {
+  return String(s ?? "").replace(/[&<>"']/g, m => (
+    { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]
+  ));
 }
 
+/* ══════════════════════════════
+   Toast notifications
+   ══════════════════════════════ */
+function showToast(msg, type = "default") {
+  const el = document.createElement("div");
+  el.className = "toast" + (type === "success" ? " toast-success" : type === "error" ? " toast-error" : "");
+  el.textContent = msg;
+  const container = document.getElementById("toastContainer");
+  container.appendChild(el);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => el.classList.add("show"));
+  });
+  setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => el.remove(), 400);
+  }, 3000);
+}
+
+/* ══════════════════════════════
+   Set loading state in listBox
+   ══════════════════════════════ */
+function setLoading(msg = "กำลังโหลด...") {
+  document.getElementById("listBox").innerHTML = `
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <div class="loading-text">${h(msg)}</div>
+    </div>`;
+}
+
+/* ══════════════════════════════
+   Bootstrap (load driver list)
+   ══════════════════════════════ */
+async function bootstrap() {
+  const isPlaceholder = !SCRIPT_URL || SCRIPT_URL.includes("PASTE_");
+  if (isPlaceholder) {
+    document.getElementById("configAlert").style.display = "flex";
+    document.getElementById("driverId").innerHTML = `<option value="">ยังไม่ได้ตั้งค่า SCRIPT_URL</option>`;
+    return;
+  }
+
+  const sel = document.getElementById("driverId");
+  sel.innerHTML = `<option value="">⏳ กำลังโหลดรายชื่อ...</option>`;
+  sel.disabled = true;
+
+  try {
+    const data = await jsonp("bootstrap");
+    if (!data.ok) throw new Error(data.error || "bootstrap error");
+
+    DDL = data.ddl || { drivers: [] };
+    sel.innerHTML = `<option value="">— เลือกชื่อพนักงานขับ —</option>` +
+      DDL.drivers.map(d =>
+        `<option value="${h(d.id)}">${h(d.name)}</option>`
+      ).join("");
+    sel.disabled = false;
+
+  } catch (err) {
+    sel.innerHTML = `<option value="">⚠️ โหลดไม่ได้</option>`;
+    sel.disabled = false;
+    showToast("โหลดรายชื่อไม่สำเร็จ: " + err.message, "error");
+  }
+}
+
+/* ══════════════════════════════
+   Refresh entire app
+   ══════════════════════════════ */
+function refreshApp() {
+  document.getElementById("listBox").innerHTML = "";
+  bootstrap();
+  showToast("รีเฟรชแล้ว ✓");
+}
+
+/* ══════════════════════════════
+   Load driver's trips
+   ══════════════════════════════ */
 async function loadMyTrips() {
   const driverId = document.getElementById("driverId").value;
-  if (!driverId) { alert("กรุณาเลือกชื่อพนักงานขับ"); return; }
+  if (!driverId) { showToast("กรุณาเลือกชื่อพนักงานขับก่อน", "error"); return; }
 
-  const res = await jsonp("driverListMyTrips", { driverId });
+  setLoading("กำลังโหลดงาน...");
+
+  try {
+    const res = await jsonp("driverListMyTrips", { driverId });
+    renderTrips(res);
+  } catch (err) {
+    document.getElementById("listBox").innerHTML = `
+      <div class="alert alert-danger">
+        <div class="alert-icon">❌</div>
+        <div>โหลดงานไม่สำเร็จ: ${h(err.message)}</div>
+      </div>`;
+  }
+}
+
+/* ══════════════════════════════
+   Render trips
+   ══════════════════════════════ */
+function renderTrips(res) {
   const box = document.getElementById("listBox");
-  box.innerHTML = "";
 
   if (!res.ok) {
-    box.innerHTML = `<div class="alert alert-danger">${escapeHtml(res.error || "error")}</div>`;
+    box.innerHTML = `
+      <div class="alert alert-danger">
+        <div class="alert-icon">❌</div>
+        <div>${h(res.error || "เกิดข้อผิดพลาด")}</div>
+      </div>`;
     return;
   }
 
-  if (!res.trips.length) {
-    box.innerHTML = `<div class="alert alert-info">ยังไม่มีงานที่ได้รับมอบหมาย</div>`;
+  if (!res.trips || !res.trips.length) {
+    box.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">ยังไม่มีงาน</div>
+        <div class="empty-desc">ยังไม่มีงานที่ได้รับมอบหมาย<br>กรุณาติดต่อเจ้าหน้าที่ออฟฟิศ</div>
+      </div>`;
     return;
   }
+
+  const count = res.trips.length;
+  let html = `
+    <div class="section-head">
+      <div class="section-head-title">งานของฉัน</div>
+      <span class="trip-count">${count}</span>
+    </div>`;
 
   res.trips.forEach(t => {
     const st = (t.status || "").toUpperCase();
-    const badge = st === "ASSIGNED" ? "bg-secondary" : (st === "IN_PROGRESS" ? "bg-warning text-dark" : "bg-success");
-    box.innerHTML += `
-      <div class="card p-3 mb-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
+    const badgeClass =
+      st === "ASSIGNED"    ? "badge-assigned" :
+      st === "IN_PROGRESS" ? "badge-progress"  :
+      "badge-delivered";
+    const badgeLabel =
+      st === "ASSIGNED"    ? "รอรับงาน"     :
+      st === "IN_PROGRESS" ? "กำลังวิ่งงาน" :
+      "ส่งแล้ว";
+
+    const dateStr = t.tripDate ? String(t.tripDate).slice(0, 10) : "—";
+
+    html += `
+      <div class="trip-card" id="card_${h(t.tripId)}">
+        <div class="trip-header">
           <div>
-            <div class="fw-bold mono">${escapeHtml(t.tripId)}</div>
-            <div class="small-muted">Order: ${escapeHtml(t.orderId)} | วันที่: ${escapeHtml(t.tripDate||"")}</div>
-            <div class="small-muted">รถ: ${escapeHtml(t.truckName||t.truckId)}</div>
+            <div class="trip-id">${h(t.tripId)}</div>
+            <div class="trip-meta">
+              <div class="trip-meta-item"><span class="trip-meta-icon">📦</span> Order: ${h(t.orderId)}</div>
+              <div class="trip-meta-item"><span class="trip-meta-icon">📅</span> ${h(dateStr)}</div>
+              <div class="trip-meta-item"><span class="trip-meta-icon">🚛</span> ${h(t.truckName || t.truckId)}</div>
+            </div>
           </div>
-          <span class="badge ${badge}">${escapeHtml(st)}</span>
+          <span class="status-badge ${badgeClass}">${badgeLabel}</span>
         </div>
 
-        <div class="row g-2">
-          <div class="col-6">
-            <label class="form-label">เลขไมล์เริ่ม</label>
-            <input id="startOdo_${t.tripId}" class="form-control" type="number" step="1" value="${t.startOdo || ""}">
+        <div class="trip-body">
+          <div class="odo-row">
+            <div class="odo-field">
+              <label class="form-label">📍 เลขไมล์เริ่ม</label>
+              <input id="startOdo_${h(t.tripId)}" class="form-control"
+                     type="number" inputmode="numeric" pattern="[0-9]*"
+                     step="1" placeholder="กม."
+                     value="${h(t.startOdo || "")}">
+            </div>
+            <div class="odo-field">
+              <label class="form-label">🏁 เลขไมล์จบ</label>
+              <input id="endOdo_${h(t.tripId)}" class="form-control"
+                     type="number" inputmode="numeric" pattern="[0-9]*"
+                     step="1" placeholder="กม."
+                     value="${h(t.endOdo || "")}">
+            </div>
           </div>
-          <div class="col-6">
-            <label class="form-label">เลขไมล์จบ</label>
-            <input id="endOdo_${t.tripId}" class="form-control" type="number" step="1" value="${t.endOdo || ""}">
-          </div>
-          <div class="col-12">
-            <label class="form-label">หมายเหตุ</label>
-            <input id="note_${t.tripId}" class="form-control" placeholder="เช่น รถติด / จุดลงของ..." value="">
-          </div>
-        </div>
 
-        <div class="d-grid gap-2 mt-3">
-          ${st === "ASSIGNED" ? `<button class="btn btn-primary" onclick="setInProgress('${t.tripId}')">▶️ รับงาน / ออกวิ่ง</button>` : ``}
-          ${st === "IN_PROGRESS" ? `<button class="btn btn-success" onclick="setDelivered('${t.tripId}')">✅ ถึงที่หมาย / ส่งแล้ว</button>` : ``}
+          <div class="note-field">
+            <label class="form-label">📝 หมายเหตุ</label>
+            <input id="note_${h(t.tripId)}" class="form-control"
+                   type="text" placeholder="เช่น รถติด / จุดลงของ..."
+                   value="">
+          </div>
+
+          <hr class="divider">
+
+          ${st === "ASSIGNED" ? `
+            <button class="btn btn-progress" onclick="setInProgress('${h(t.tripId)}')">
+              ▶️ รับงาน / ออกวิ่ง
+            </button>` : ""}
+          ${st === "IN_PROGRESS" ? `
+            <button class="btn btn-success" onclick="setDelivered('${h(t.tripId)}')">
+              ✅ ถึงที่หมาย / ส่งแล้ว
+            </button>` : ""}
+          ${st === "DELIVERED" ? `
+            <div class="alert alert-success" style="margin-bottom:0;border-radius:12px;">
+              <div class="alert-icon">✅</div>
+              <div style="font-weight:700;">ส่งสำเร็จแล้ว</div>
+            </div>` : ""}
         </div>
-      </div>
-    `;
+      </div>`;
   });
+
+  box.innerHTML = html;
 }
 
+/* ══════════════════════════════
+   Set trip → IN_PROGRESS
+   ══════════════════════════════ */
 async function setInProgress(tripId) {
-  const startOdo = document.getElementById("startOdo_" + tripId).value;
-  const note = document.getElementById("note_" + tripId).value;
-  const res = await jsonp("driverUpdateStatus", {
-    tripId, status: "IN_PROGRESS", startOdo, note
-  });
-  if (!res.ok) { alert(res.error || "อัปเดตไม่สำเร็จ"); return; }
-  alert("รับงานแล้ว");
-  loadMyTrips();
+  const startOdo = document.getElementById("startOdo_" + tripId)?.value || "";
+  const note     = document.getElementById("note_"     + tripId)?.value || "";
+
+  setCardBusy(tripId, true);
+  try {
+    const res = await jsonp("driverUpdateStatus", {
+      tripId, status: "IN_PROGRESS", startOdo, note
+    });
+    if (!res.ok) throw new Error(res.error || "อัปเดตไม่สำเร็จ");
+    showToast("รับงานแล้ว 🚀 กำลังออกวิ่ง", "success");
+    await loadMyTrips();
+  } catch (err) {
+    showToast("เกิดข้อผิดพลาด: " + err.message, "error");
+    setCardBusy(tripId, false);
+  }
 }
 
+/* ══════════════════════════════
+   Set trip → DELIVERED
+   ══════════════════════════════ */
 async function setDelivered(tripId) {
-  const endOdo = document.getElementById("endOdo_" + tripId).value;
-  const note = document.getElementById("note_" + tripId).value;
-  const res = await jsonp("driverUpdateStatus", {
-    tripId, status: "DELIVERED", endOdo, note
-  });
-  if (!res.ok) { alert(res.error || "อัปเดตไม่สำเร็จ"); return; }
-  alert("ส่งงานเรียบร้อย");
-  loadMyTrips();
+  const endOdo = document.getElementById("endOdo_" + tripId)?.value || "";
+  const note   = document.getElementById("note_"   + tripId)?.value || "";
+
+  setCardBusy(tripId, true);
+  try {
+    const res = await jsonp("driverUpdateStatus", {
+      tripId, status: "DELIVERED", endOdo, note
+    });
+    if (!res.ok) throw new Error(res.error || "อัปเดตไม่สำเร็จ");
+    showToast("ส่งงานเรียบร้อย ✅", "success");
+    await loadMyTrips();
+  } catch (err) {
+    showToast("เกิดข้อผิดพลาด: " + err.message, "error");
+    setCardBusy(tripId, false);
+  }
 }
 
+/* ══════════════════════════════
+   UI helpers
+   ══════════════════════════════ */
+function setCardBusy(tripId, busy) {
+  const card = document.getElementById("card_" + tripId);
+  if (!card) return;
+  const btn = card.querySelector("button");
+  if (!btn) return;
+  if (busy) {
+    btn.disabled = true;
+    btn.textContent = "⏳ กำลังอัปเดต...";
+  }
+}
+
+/* ══════════════════════════════
+   Init
+   ══════════════════════════════ */
 window.addEventListener("load", bootstrap);
 </script>
 </body>
