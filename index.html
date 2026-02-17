@@ -1,157 +1,169 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="th">
 <head>
-    <base target="_top">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
-        .container { max-width: 800px; margin-top: 30px; }
-        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .nav-pills .nav-link.active { background-color: #0d6efd; }
-        .score-total { font-size: 1.5rem; font-weight: bold; color: #0d6efd; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Transport - Driver</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#0b1020; color:#e5edff; }
+    .card { background:#121936; border:0; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+    .badge { font-size:.9rem; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace; }
+    .btn-primary { background:#5b7cff; border:0; }
+    .small-muted { color:#9fb0ff; }
+  </style>
 </head>
 <body>
+<div class="container py-3">
 
-<div class="container">
-    <h2 class="text-center mb-4">T&G LOGISTICS-MD 1</h2>
-    
-    <ul class="nav nav-pills nav-fill mb-4" id="pills-tab" role="tablist">
-        <li class="nav-item">
-            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#todo-page">To do list</button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#round1-page">1st Round</button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#round2-page">2nd Round</button>
-        </li>
-    </ul>
-
-    <div class="tab-content">
-        <div class="tab-pane fade show active" id="todo-page">
-            <div class="card p-4">
-                <h5>ชื่อกิจการ</h5>
-                <select class="form-select mb-4 company-select"></select>
-                <hr>
-                <h5>รายการตรวจสอบ</h5>
-                <div id="todo-container" class="mb-4"></div>
-                <button class="btn btn-primary w-100" onclick="submitTodo()">บันทึกข้อมูล</button>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="round1-page">
-            <div class="card p-4">
-                <h5>ชื่อกิจการ</h5>
-                <select class="form-select mb-4 company-select"></select>
-                <table class="table">
-                    <thead><tr><th>หัวข้อ</th><th width="150px">คะแนน</th></tr></thead>
-                    <tbody id="round1-table"></tbody>
-                </table>
-                <div class="text-end mb-3">คะแนนรวม: <span class="score-total" id="total1">0</span></div>
-                <button class="btn btn-success w-100" onclick="submitRound('1st')">บันทึก 1st Round</button>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="round2-page">
-            <div class="card p-4">
-                <h5>ชื่อกิจการ</h5>
-                <select class="form-select mb-4 company-select"></select>
-                <table class="table">
-                    <thead><tr><th>หัวข้อ</th><th width="150px">คะแนน</th></tr></thead>
-                    <tbody id="round2-table"></tbody>
-                </table>
-                <div class="text-end mb-3">คะแนนรวม: <span class="score-total" id="total2">0</span></div>
-                <button class="btn btn-info text-white w-100" onclick="submitRound('2nd')">บันทึก 2nd Round</button>
-            </div>
-        </div>
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h4 class="mb-0">🚚 Driver App</h4>
+      <div class="small-muted">รับงาน • อัปเดตสถานะ • กรอกเลขไมล์</div>
     </div>
+    <button class="btn btn-outline-light btn-sm" onclick="bootstrap()">รีเฟรช</button>
+  </div>
+
+  <div class="alert alert-warning">
+    <div class="fw-bold">ตั้งค่า SCRIPT_URL ก่อนใช้งาน</div>
+    <div class="small">แก้ค่า <span class="mono">SCRIPT_URL</span> ให้เป็นลิงก์ /exec จาก Apps Script</div>
+  </div>
+
+  <div class="card p-3 mb-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-12">
+        <label class="form-label">เลือกชื่อพนักงานขับ</label>
+        <select id="driverId" class="form-select"></select>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-primary w-100" onclick="loadMyTrips()">โหลดงานของฉัน</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="listBox"></div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    let appData = {};
+/** 👉 ใส่ URL /exec ของ Apps Script */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8NWX9UlCkO6dynXA8w8R3AmY5qQtdXVDtYuyaMPLQJZWA1_Roib7rIihtHwK3Pdh0/exec";
 
-    // โหลดข้อมูลเริ่มต้น
-    window.onload = () => {
-        google.script.run.withSuccessHandler(init).getInitialData();
-    };
+/** JSONP helper */
+function jsonp(action, params = {}) {
+  return new Promise((resolve, reject) => {
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    const url = new URL(SCRIPT_URL);
+    url.searchParams.set("action", action);
+    url.searchParams.set("callback", cb);
+    Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+    const script = document.createElement("script");
+    script.src = url.toString();
+    script.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    function cleanup(){ delete window[cb]; script.remove(); }
+    document.body.appendChild(script);
+  });
+}
 
-    function init(data) {
-        appData = data;
-        renderInputs();
-    }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m])); }
 
-    function renderInputs() {
-        // Render Company Dropdown
-        document.querySelectorAll('.company-select').forEach(sel => {
-            sel.innerHTML = appData.companies.map(c => `<option value="${c}">${c}</option>`).join('');
-        });
+let DDL = { drivers:[] };
 
-        // Render Todo List
-        document.getElementById('todo-container').innerHTML = appData.todoItems.map((item, i) => `
-            <div class="form-check mb-2">
-                <input class="form-check-input todo-chk" type="checkbox" value="${item}" id="todo${i}">
-                <label class="form-check-label" for="todo${i}">${item}</label>
-            </div>
-        `).join('');
+async function bootstrap() {
+  if (!SCRIPT_URL || SCRIPT_URL.includes("PASTE_")) {
+    alert("กรุณาใส่ SCRIPT_URL ก่อน");
+    return;
+  }
+  const data = await jsonp("bootstrap");
+  if (!data.ok) { alert(data.error || "bootstrap error"); return; }
+  DDL = data.ddl || { drivers:[] };
+  const sel = document.getElementById("driverId");
+  sel.innerHTML = `<option value="">-- เลือกชื่อ --</option>` + DDL.drivers.map(d =>
+    `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)} (${escapeHtml(d.id)})</option>`
+  ).join("");
+}
 
-        // Render Tables
-        renderTable('round1-table', appData.round1Heads, '1st');
-        renderTable('round2-table', appData.round2Heads, '2nd');
-    }
+async function loadMyTrips() {
+  const driverId = document.getElementById("driverId").value;
+  if (!driverId) { alert("กรุณาเลือกชื่อพนักงานขับ"); return; }
 
-    function renderTable(tableId, headers, round) {
-        const tbody = document.getElementById(tableId);
-        tbody.innerHTML = headers.map((h, i) => `
-            <tr>
-                <td>${h}</td>
-                <td>
-                    <select class="form-select score-input" onchange="calcTotal('${round}')" data-head="${h}">
-                        ${[...Array(10).keys()].map(n => `<option value="${n+1}" ${n+1===10 ? 'selected':''}>${n+1}</option>`).join('')}
-                    </select>
-                </td>
-            </tr>
-        `).join('');
-        calcTotal(round);
-    }
+  const res = await jsonp("driverListMyTrips", { driverId });
+  const box = document.getElementById("listBox");
+  box.innerHTML = "";
 
-    function calcTotal(round) {
-        const id = round === '1st' ? 'round1-table' : 'round2-table';
-        const totalId = round === '1st' ? 'total1' : 'total2';
-        let sum = 0;
-        document.querySelectorAll(`#${id} .score-input`).forEach(s => sum += parseInt(s.value));
-        document.getElementById(totalId).innerText = sum;
-    }
+  if (!res.ok) {
+    box.innerHTML = `<div class="alert alert-danger">${escapeHtml(res.error || "error")}</div>`;
+    return;
+  }
 
-    function submitTodo() {
-        const company = document.querySelector('#todo-page .company-select').value;
-        const checks = [];
-        document.querySelectorAll('.todo-chk').forEach(chk => {
-            checks.push({ item: chk.value, done: chk.checked });
-        });
+  if (!res.trips.length) {
+    box.innerHTML = `<div class="alert alert-info">ยังไม่มีงานที่ได้รับมอบหมาย</div>`;
+    return;
+  }
 
-        google.script.run.withSuccessHandler(() => {
-            alert('บันทึกสำเร็จ!');
-            renderInputs(); // ล้างข้อมูลโดยการ render ใหม่
-        }).saveData('todo', company, checks);
-    }
+  res.trips.forEach(t => {
+    const st = (t.status || "").toUpperCase();
+    const badge = st === "ASSIGNED" ? "bg-secondary" : (st === "IN_PROGRESS" ? "bg-warning text-dark" : "bg-success");
+    box.innerHTML += `
+      <div class="card p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <div class="fw-bold mono">${escapeHtml(t.tripId)}</div>
+            <div class="small-muted">Order: ${escapeHtml(t.orderId)} | วันที่: ${escapeHtml(t.tripDate||"")}</div>
+            <div class="small-muted">รถ: ${escapeHtml(t.truckName||t.truckId)}</div>
+          </div>
+          <span class="badge ${badge}">${escapeHtml(st)}</span>
+        </div>
 
-    function submitRound(round) {
-        const pageId = round === '1st' ? '#round1-page' : '#round2-page';
-        const tableId = round === '1st' ? 'round1-table' : 'round2-table';
-        const company = document.querySelector(`${pageId} .company-select`).value;
-        const scores = [];
-        
-        document.querySelectorAll(`#${tableId} .score-input`).forEach(s => {
-            scores.push({ head: s.dataset.head, score: s.value });
-        });
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label">เลขไมล์เริ่ม</label>
+            <input id="startOdo_${t.tripId}" class="form-control" type="number" step="1" value="${t.startOdo || ""}">
+          </div>
+          <div class="col-6">
+            <label class="form-label">เลขไมล์จบ</label>
+            <input id="endOdo_${t.tripId}" class="form-control" type="number" step="1" value="${t.endOdo || ""}">
+          </div>
+          <div class="col-12">
+            <label class="form-label">หมายเหตุ</label>
+            <input id="note_${t.tripId}" class="form-control" placeholder="เช่น รถติด / จุดลงของ..." value="">
+          </div>
+        </div>
 
-        google.script.run.withSuccessHandler(() => {
-            alert('บันทึกคะแนนสำเร็จ!');
-            renderInputs();
-        }).saveData(round, company, scores);
-    }
+        <div class="d-grid gap-2 mt-3">
+          ${st === "ASSIGNED" ? `<button class="btn btn-primary" onclick="setInProgress('${t.tripId}')">▶️ รับงาน / ออกวิ่ง</button>` : ``}
+          ${st === "IN_PROGRESS" ? `<button class="btn btn-success" onclick="setDelivered('${t.tripId}')">✅ ถึงที่หมาย / ส่งแล้ว</button>` : ``}
+        </div>
+      </div>
+    `;
+  });
+}
+
+async function setInProgress(tripId) {
+  const startOdo = document.getElementById("startOdo_" + tripId).value;
+  const note = document.getElementById("note_" + tripId).value;
+  const res = await jsonp("driverUpdateStatus", {
+    tripId, status: "IN_PROGRESS", startOdo, note
+  });
+  if (!res.ok) { alert(res.error || "อัปเดตไม่สำเร็จ"); return; }
+  alert("รับงานแล้ว");
+  loadMyTrips();
+}
+
+async function setDelivered(tripId) {
+  const endOdo = document.getElementById("endOdo_" + tripId).value;
+  const note = document.getElementById("note_" + tripId).value;
+  const res = await jsonp("driverUpdateStatus", {
+    tripId, status: "DELIVERED", endOdo, note
+  });
+  if (!res.ok) { alert(res.error || "อัปเดตไม่สำเร็จ"); return; }
+  alert("ส่งงานเรียบร้อย");
+  loadMyTrips();
+}
+
+window.addEventListener("load", bootstrap);
 </script>
 </body>
 </html>
