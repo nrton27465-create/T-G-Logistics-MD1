@@ -677,7 +677,7 @@
 /* ═══════════════════════════════════════════════
    👉  ใส่ URL /exec ของ Apps Script ตรงนี้
    ═══════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFk9lP9_rKv3rYoYWIfrK-uM3LXyR68pAalE48nDpcI86HZzv1CmMm-9miA_EB5--9ug/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyL53i6VKAwn6xH7NRFS0HQf0G-1mW3HgaMFXp8-GswSzE_s1Qbyts6KH5alQXOubJt5g/exec";
 
 /* ── STATE ── */
 let DDL = { drivers: [] };
@@ -898,28 +898,43 @@ function renderTrips(res) {
         </div>
 
         <div class="trip-body">
+          ${st === "ASSIGNED" ? `
+          <!-- ASSIGNED: แสดงแค่ไมล์เริ่ม -->
+          <div class="odo-field" style="margin-bottom:16px;">
+            <label class="form-label">📍 เลขไมล์เริ่ม</label>
+            <input id="startOdo_${h(t.tripId)}" class="form-control"
+                   type="number" inputmode="numeric" pattern="[0-9]*"
+                   step="1" placeholder="กม."
+                   value="${h(t.startOdo || "")}">
+          </div>
+          ` : `
+          <!-- IN_PROGRESS / DELIVERED: แสดงครบ -->
           <div class="odo-row">
             <div class="odo-field">
               <label class="form-label">📍 เลขไมล์เริ่ม</label>
               <input id="startOdo_${h(t.tripId)}" class="form-control"
                      type="number" inputmode="numeric" pattern="[0-9]*"
                      step="1" placeholder="กม."
-                     value="${h(t.startOdo || "")}">
+                     value="${h(t.startOdo || "")}"
+                     ${st === "DELIVERED" ? "readonly" : ""}>
             </div>
             <div class="odo-field">
               <label class="form-label">🏁 เลขไมล์จบ</label>
               <input id="endOdo_${h(t.tripId)}" class="form-control"
                      type="number" inputmode="numeric" pattern="[0-9]*"
                      step="1" placeholder="กม."
-                     value="${h(t.endOdo || "")}">
+                     value="${h(t.endOdo || "")}"
+                     ${st === "DELIVERED" ? "readonly" : ""}>
             </div>
           </div>
+          `}
 
           <div class="note-field">
             <label class="form-label">📝 หมายเหตุ</label>
             <input id="note_${h(t.tripId)}" class="form-control"
                    type="text" placeholder="เช่น รถติด / จุดลงของ..."
-                   value="">
+                   value=""
+                   ${st === "DELIVERED" ? "readonly" : ""}>
           </div>
 
           ${st === "DELIVERED" ? "" : `
