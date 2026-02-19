@@ -678,7 +678,7 @@
 /* ═══════════════════════════════════════════════
    👉  ใส่ URL /exec ของ Apps Script ตรงนี้
    ═══════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrdvY55Oj-7BXxGccAIOxR1jxoufcB__f21OvlaUH56SAJfVq2ORJTc4N1xQhxPq35FA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0V_rHfWQmY9gI-fxLAGcyaNs7NrvndgJu8yZSmuDksnbp5NVM9aJSBpZpRdfrjQrtQQ/exec";
 
 /* ── STATE ── */
 let DDL = { drivers: [] };
@@ -908,44 +908,22 @@ function renderTrips(res) {
         <div class="trip-body">
           ${st === "ASSIGNED" ? `
           <!-- ASSIGNED: แสดงแค่ไมล์เริ่ม -->
-          <div class="odo-field" style="margin-bottom:16px;">
+          <div class="odo-field" style="margin-bottom:20px;">
             <label class="form-label">📍 เลขไมล์เริ่ม</label>
             <input id="startOdo_${h(t.tripId)}" class="form-control"
                    type="number" inputmode="numeric" pattern="[0-9]*"
                    step="1" placeholder="กม."
                    value="${h(t.startOdo || "")}">
           </div>
-          ` : `
-          <!-- IN_PROGRESS / DELIVERED: แสดงครบ -->
-          <div class="odo-row">
-            <div class="odo-field">
-              <label class="form-label">📍 เลขไมล์เริ่ม</label>
-              <input id="startOdo_${h(t.tripId)}" class="form-control"
-                     type="number" inputmode="numeric" pattern="[0-9]*"
-                     step="1" placeholder="กม."
-                     value="${h(t.startOdo || "")}"
-                     ${st === "DELIVERED" ? "readonly" : ""}>
-            </div>
-            <div class="odo-field">
-              <label class="form-label">🏁 เลขไมล์จบ</label>
-              <input id="endOdo_${h(t.tripId)}" class="form-control"
-                     type="number" inputmode="numeric" pattern="[0-9]*"
-                     step="1" placeholder="กม."
-                     value="${h(t.endOdo || "")}"
-                     ${st === "DELIVERED" ? "readonly" : ""}>
-            </div>
-          </div>
-          `}
-
+          ` : st === "IN_PROGRESS" ? `
+          <!-- IN_PROGRESS: แสดงแค่หมายเหตุ + ถ่ายรูป -->
           <div class="note-field">
             <label class="form-label">📝 หมายเหตุ</label>
             <input id="note_${h(t.tripId)}" class="form-control"
                    type="text" placeholder="เช่น รถติด / จุดลงของ..."
-                   value=""
-                   ${st === "DELIVERED" ? "readonly" : ""}>
+                   value="">
           </div>
 
-          ${st === "DELIVERED" ? "" : `
           <div class="file-input-wrap">
             <input type="file" accept="image/*" capture="environment" 
                    class="file-input" id="photo_${h(t.tripId)}"
@@ -954,6 +932,15 @@ function renderTrips(res) {
               📷 ถ่ายรูปหน้างาน
             </label>
             <div id="preview_${h(t.tripId)}" class="file-preview"></div>
+          </div>
+          ` : `
+          <!-- DELIVERED: แสดงแค่ไมล์จบ -->
+          <div class="odo-field" style="margin-bottom:20px;">
+            <label class="form-label">🏁 เลขไมล์จบ</label>
+            <input id="endOdo_${h(t.tripId)}" class="form-control"
+                   type="number" inputmode="numeric" pattern="[0-9]*"
+                   step="1" placeholder="กม."
+                   value="${h(t.endOdo || "")}">
           </div>
           `}
 
@@ -968,10 +955,9 @@ function renderTrips(res) {
               ✅ ถึงที่หมาย / ส่งแล้ว
             </button>` : ""}
           ${st === "DELIVERED" ? `
-            <div class="alert alert-success" style="margin-bottom:0;border-radius:12px;">
-              <div class="alert-icon">✅</div>
-              <div style="font-weight:700;">ส่งสำเร็จแล้ว</div>
-            </div>` : ""}
+            <button class="btn btn-primary" onclick="saveEndOdo('${h(t.tripId)}')">
+              💾 บันทึกเลขไมล์จบ
+            </button>` : ""}
         </div>
       </div>`;
   });
@@ -1001,22 +987,17 @@ function previewPhoto(tripId) {
    ══════════════════════════════ */
 async function setInProgress(tripId) {
   const startOdo = document.getElementById("startOdo_" + tripId)?.value || "";
-  const note     = document.getElementById("note_"     + tripId)?.value || "";
-  const photoInput = document.getElementById("photo_" + tripId);
+
+  if (!startOdo) {
+    showToast("กรุณากรอกเลขไมล์เริ่ม", "error");
+    return;
+  }
 
   setCardBusy(tripId, true);
 
   try {
-    // Upload photo first if exists
-    if (photoInput?.files?.[0]) {
-      showToast("กำลังอัปโหลดรูปภาพ...");
-      const uploadRes = await uploadPhoto(tripId, photoInput.files[0]);
-      if (!uploadRes.ok) throw new Error("อัปโหลดรูปไม่สำเร็จ: " + uploadRes.error);
-    }
-
-    // Update status
     const res = await jsonp("driverUpdateStatus", {
-      tripId, status: "IN_PROGRESS", startOdo, note
+      tripId, status: "IN_PROGRESS", startOdo
     });
     if (!res.ok) throw new Error(res.error || "อัปเดตไม่สำเร็จ");
 
@@ -1032,7 +1013,6 @@ async function setInProgress(tripId) {
    Set trip → DELIVERED
    ══════════════════════════════ */
 async function setDelivered(tripId) {
-  const endOdo = document.getElementById("endOdo_" + tripId)?.value || "";
   const note   = document.getElementById("note_"   + tripId)?.value || "";
   const photoInput = document.getElementById("photo_" + tripId);
 
@@ -1046,13 +1026,40 @@ async function setDelivered(tripId) {
       if (!uploadRes.ok) throw new Error("อัปโหลดรูปไม่สำเร็จ: " + uploadRes.error);
     }
 
-    // Update status
+    // Update status (no endOdo yet)
     const res = await jsonp("driverUpdateStatus", {
-      tripId, status: "DELIVERED", endOdo, note
+      tripId, status: "DELIVERED", note
     });
     if (!res.ok) throw new Error(res.error || "อัปเดตไม่สำเร็จ");
 
-    showToast("ส่งงานเรียบร้อย ✅", "success");
+    showToast("ส่งงานเรียบร้อย ✅ กรุณากลับมาบันทึกไมล์จบที่บริษัท", "success");
+    await loadMyTrips();
+  } catch (err) {
+    showToast("เกิดข้อผิดพลาด: " + err.message, "error");
+    setCardBusy(tripId, false);
+  }
+}
+
+/* ══════════════════════════════
+   Save endOdo for DELIVERED trip (no status change)
+   ══════════════════════════════ */
+async function saveEndOdo(tripId) {
+  const endOdo = document.getElementById("endOdo_" + tripId)?.value || "";
+
+  if (!endOdo) {
+    showToast("กรุณากรอกเลขไมล์จบ", "error");
+    return;
+  }
+
+  setCardBusy(tripId, true);
+
+  try {
+    const res = await jsonp("driverSaveEndOdo", {
+      tripId, endOdo
+    });
+    if (!res.ok) throw new Error(res.error || "บันทึกไม่สำเร็จ");
+
+    showToast("บันทึกเลขไมล์จบเรียบร้อย 💾", "success");
     await loadMyTrips();
   } catch (err) {
     showToast("เกิดข้อผิดพลาด: " + err.message, "error");
