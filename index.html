@@ -31,11 +31,11 @@
       --shadow-md: 0 6px 24px rgba(3,23,74,.14);
       --shadow-lg: 0 12px 48px rgba(3,23,74,.18);
       --fs-xs:  14px;
---fs-sm:  16px;
---fs-md:  18px;
---fs-lg:  20px;
---fs-xl:  23px;
---fs-2xl: 27px;
+      --fs-sm:  16px;
+      --fs-md:  18px;
+      --fs-lg:  20px;
+      --fs-xl:  23px;
+      --fs-2xl: 27px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -118,13 +118,47 @@
     }
     .btn-refresh:active { transform: scale(.9); background: rgba(255,255,255,.22); }
 
+    /* ─── BOTTOM NAV ─── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      border-top: 1.5px solid var(--blue-100);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      z-index: 99;
+      box-shadow: 0 -4px 20px rgba(3,23,74,.08);
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 8px;
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .2s;
+      border: none;
+      background: none;
+    }
+    .nav-item-icon { font-size: 24px; margin-bottom: 4px; }
+    .nav-item.active { color: var(--blue-600); }
+    .nav-item:active { background: var(--blue-100); }
+
     /* ─── MAIN CONTENT ─── */
     .main {
       padding: 24px 20px;
       max-width: 640px;
       margin: 0 auto;
-      padding-bottom: calc(env(safe-area-inset-bottom, 0) + 32px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 0) + 80px);
     }
+
+    .page { display: none; }
+    .page.active { display: block; }
 
     /* ─── ALERT ─── */
     .alert {
@@ -205,6 +239,49 @@
       background: white;
     }
 
+    /* ─── FILE INPUT (CAMERA) ─── */
+    .file-input-wrap {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .file-input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .file-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      font-family: 'Sarabun', sans-serif;
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      border: 2px dashed var(--blue-300);
+      border-radius: var(--radius-sm);
+      padding: 18px 24px;
+      cursor: pointer;
+      transition: all .2s;
+      background: var(--blue-100);
+      color: var(--blue-700);
+      min-height: 64px;
+    }
+    .file-label:active { background: var(--blue-200); border-color: var(--blue-500); }
+    .file-preview {
+      margin-top: 12px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      display: none;
+    }
+    .file-preview img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .file-preview.show { display: block; }
+
     /* ─── BUTTONS ─── */
     .btn {
       display: flex;
@@ -221,10 +298,14 @@
       cursor: pointer;
       transition: all .18s;
       letter-spacing: .2px;
-      min-height: 68px;
+      min-height: 64px;
       line-height: 1.2;
     }
     .btn:active { transform: scale(.97); }
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--blue-600) 0%, var(--blue-500) 100%);
@@ -338,7 +419,7 @@
       gap: 6px;
     }
 
-    .trip-meta-icon { font-size: 20px; }
+    .trip-meta-icon { font-size: 16px; }
 
     .trip-body {
       padding: 20px 24px;
@@ -355,7 +436,7 @@
     .odo-field { display: flex; flex-direction: column; }
 
     /* ─── NOTE FIELD ─── */
-    .note-field { margin-bottom: 20px; }
+    .note-field { margin-bottom: 16px; }
 
     /* ─── DIVIDER ─── */
     .divider {
@@ -422,7 +503,7 @@
     /* ─── TOAST NOTIFICATION ─── */
     .toast-container {
       position: fixed;
-      bottom: calc(env(safe-area-inset-bottom, 0) + 24px);
+      bottom: calc(env(safe-area-inset-bottom, 0) + 80px);
       left: 50%;
       transform: translateX(-50%);
       z-index: 9999;
@@ -465,6 +546,55 @@
       color: var(--text-primary);
     }
 
+    /* ─── TABLE (HISTORY) ─── */
+    .table-wrap {
+      overflow-x: auto;
+      margin: -24px -20px 0;
+      padding: 0 20px 24px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-xs);
+      background: white;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .data-table th {
+      background: var(--blue-700);
+      color: white;
+      font-weight: 700;
+      padding: 14px 12px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--blue-100);
+      color: var(--text-primary);
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:nth-child(even) { background: var(--blue-100); }
+    .table-tripid {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 700;
+      color: var(--blue-700);
+    }
+    .table-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .table-photo-link {
+      color: var(--blue-600);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .table-photo-link:hover { text-decoration: underline; }
+
     /* safe area bottom padding */
     .safe-bottom { height: env(safe-area-inset-bottom, 0); }
   </style>
@@ -497,25 +627,48 @@
     </div>
   </div>
 
-  <!-- Driver selector card -->
-  <div class="card">
-    <div class="card-body">
-      <label class="form-label">👤 เลือกชื่อพนักงานขับ</label>
-      <select id="driverId" class="form-select">
-        <option value="">— กำลังโหลดรายชื่อ... —</option>
-      </select>
+  <!-- ════════════════ PAGE: HOME ════════════════ -->
+  <div id="pageHome" class="page active">
+    <!-- Driver selector card -->
+    <div class="card">
+      <div class="card-body">
+        <label class="form-label">👤 เลือกชื่อพนักงานขับ</label>
+        <select id="driverId" class="form-select">
+          <option value="">— กำลังโหลดรายชื่อ... —</option>
+        </select>
+      </div>
+      <div class="card-body">
+        <button class="btn btn-primary" onclick="loadMyTrips()">
+          📋 โหลดงานของฉัน
+        </button>
+      </div>
     </div>
-    <div class="card-body">
-      <button class="btn btn-primary" onclick="loadMyTrips()">
-        📋 โหลดงานของฉัน
-      </button>
-    </div>
+
+    <!-- Trip list output -->
+    <div id="listBox"></div>
   </div>
 
-  <!-- Trip list output -->
-  <div id="listBox"></div>
+  <!-- ════════════════ PAGE: HISTORY ════════════════ -->
+  <div id="pageHistory" class="page">
+    <div class="section-head">
+      <div class="section-head-title">ประวัติงานทั้งหมด</div>
+    </div>
+    <div id="historyBox"></div>
+  </div>
 
 </main>
+
+<!-- ─── BOTTOM NAV ─── -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchPage('home')">
+    <div class="nav-item-icon">🏠</div>
+    <div>งานปัจจุบัน</div>
+  </button>
+  <button class="nav-item" onclick="switchPage('history')">
+    <div class="nav-item-icon">📊</div>
+    <div>ประวัติงาน</div>
+  </button>
+</nav>
 
 <!-- ─── TOAST CONTAINER ─── -->
 <div class="toast-container" id="toastContainer"></div>
@@ -524,10 +677,28 @@
 /* ═══════════════════════════════════════════════
    👉  ใส่ URL /exec ของ Apps Script ตรงนี้
    ═══════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwm3m84gxgShc5zkAzixv1eBLzX5K1r5o3SFgdTa-m_xZYthskiBDb8QBy5p7gbSJDOhg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFk9lP9_rKv3rYoYWIfrK-uM3LXyR68pAalE48nDpcI86HZzv1CmMm-9miA_EB5--9ug/exec";
 
-/* ── DDL Cache ── */
+/* ── STATE ── */
 let DDL = { drivers: [] };
+let CURRENT_DRIVER = "";
+
+/* ══════════════════════════════
+   PAGE NAVIGATION
+   ══════════════════════════════ */
+function switchPage(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+
+  if (page === "home") {
+    document.getElementById("pageHome").classList.add("active");
+    document.querySelectorAll(".nav-item")[0].classList.add("active");
+  } else if (page === "history") {
+    document.getElementById("pageHistory").classList.add("active");
+    document.querySelectorAll(".nav-item")[1].classList.add("active");
+    loadHistory();
+  }
+}
 
 /* ══════════════════════════════
    JSONP helper
@@ -549,6 +720,19 @@ function jsonp(action, params = {}) {
 
     document.body.appendChild(script);
   });
+}
+
+/* ══════════════════════════════
+   Upload photo via FormData POST
+   ══════════════════════════════ */
+async function uploadPhoto(tripId, fileBlob) {
+  const formData = new FormData();
+  formData.append("action", "uploadPhoto");
+  formData.append("tripId", tripId);
+  formData.append("photo", fileBlob, "photo.jpg");
+
+  const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
+  return await res.json();
 }
 
 /* ══════════════════════════════
@@ -581,8 +765,8 @@ function showToast(msg, type = "default") {
 /* ══════════════════════════════
    Set loading state in listBox
    ══════════════════════════════ */
-function setLoading(msg = "กำลังโหลด...") {
-  document.getElementById("listBox").innerHTML = `
+function setLoading(boxId, msg = "กำลังโหลด...") {
+  document.getElementById(boxId).innerHTML = `
     <div class="loading-wrap">
       <div class="spinner"></div>
       <div class="loading-text">${h(msg)}</div>
@@ -627,18 +811,20 @@ async function bootstrap() {
    ══════════════════════════════ */
 function refreshApp() {
   document.getElementById("listBox").innerHTML = "";
+  document.getElementById("historyBox").innerHTML = "";
   bootstrap();
   showToast("รีเฟรชแล้ว ✓");
 }
 
 /* ══════════════════════════════
-   Load driver's trips
+   Load driver's current trips
    ══════════════════════════════ */
 async function loadMyTrips() {
   const driverId = document.getElementById("driverId").value;
   if (!driverId) { showToast("กรุณาเลือกชื่อพนักงานขับก่อน", "error"); return; }
 
-  setLoading("กำลังโหลดงาน...");
+  CURRENT_DRIVER = driverId;
+  setLoading("listBox", "กำลังโหลดงาน...");
 
   try {
     const res = await jsonp("driverListMyTrips", { driverId });
@@ -736,6 +922,18 @@ function renderTrips(res) {
                    value="">
           </div>
 
+          ${st === "DELIVERED" ? "" : `
+          <div class="file-input-wrap">
+            <input type="file" accept="image/*" capture="environment" 
+                   class="file-input" id="photo_${h(t.tripId)}"
+                   onchange="previewPhoto('${h(t.tripId)}')">
+            <label for="photo_${h(t.tripId)}" class="file-label">
+              📷 ถ่ายรูปหน้างาน
+            </label>
+            <div id="preview_${h(t.tripId)}" class="file-preview"></div>
+          </div>
+          `}
+
           <hr class="divider">
 
           ${st === "ASSIGNED" ? `
@@ -759,18 +957,46 @@ function renderTrips(res) {
 }
 
 /* ══════════════════════════════
+   Preview photo
+   ══════════════════════════════ */
+function previewPhoto(tripId) {
+  const input = document.getElementById("photo_" + tripId);
+  const preview = document.getElementById("preview_" + tripId);
+  
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+      preview.classList.add("show");
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+/* ══════════════════════════════
    Set trip → IN_PROGRESS
    ══════════════════════════════ */
 async function setInProgress(tripId) {
   const startOdo = document.getElementById("startOdo_" + tripId)?.value || "";
   const note     = document.getElementById("note_"     + tripId)?.value || "";
+  const photoInput = document.getElementById("photo_" + tripId);
 
   setCardBusy(tripId, true);
+
   try {
+    // Upload photo first if exists
+    if (photoInput?.files?.[0]) {
+      showToast("กำลังอัปโหลดรูปภาพ...");
+      const uploadRes = await uploadPhoto(tripId, photoInput.files[0]);
+      if (!uploadRes.ok) throw new Error("อัปโหลดรูปไม่สำเร็จ: " + uploadRes.error);
+    }
+
+    // Update status
     const res = await jsonp("driverUpdateStatus", {
       tripId, status: "IN_PROGRESS", startOdo, note
     });
     if (!res.ok) throw new Error(res.error || "อัปเดตไม่สำเร็จ");
+
     showToast("รับงานแล้ว 🚀 กำลังออกวิ่ง", "success");
     await loadMyTrips();
   } catch (err) {
@@ -785,19 +1011,139 @@ async function setInProgress(tripId) {
 async function setDelivered(tripId) {
   const endOdo = document.getElementById("endOdo_" + tripId)?.value || "";
   const note   = document.getElementById("note_"   + tripId)?.value || "";
+  const photoInput = document.getElementById("photo_" + tripId);
 
   setCardBusy(tripId, true);
+
   try {
+    // Upload photo first if exists
+    if (photoInput?.files?.[0]) {
+      showToast("กำลังอัปโหลดรูปภาพ...");
+      const uploadRes = await uploadPhoto(tripId, photoInput.files[0]);
+      if (!uploadRes.ok) throw new Error("อัปโหลดรูปไม่สำเร็จ: " + uploadRes.error);
+    }
+
+    // Update status
     const res = await jsonp("driverUpdateStatus", {
       tripId, status: "DELIVERED", endOdo, note
     });
     if (!res.ok) throw new Error(res.error || "อัปเดตไม่สำเร็จ");
+
     showToast("ส่งงานเรียบร้อย ✅", "success");
     await loadMyTrips();
   } catch (err) {
     showToast("เกิดข้อผิดพลาด: " + err.message, "error");
     setCardBusy(tripId, false);
   }
+}
+
+/* ══════════════════════════════
+   Load trip history
+   ══════════════════════════════ */
+async function loadHistory() {
+  const driverId = CURRENT_DRIVER || document.getElementById("driverId").value;
+  if (!driverId) {
+    document.getElementById("historyBox").innerHTML = `
+      <div class="alert alert-info">
+        <div class="alert-icon">ℹ️</div>
+        <div>กรุณาเลือกชื่อพนักงานขับที่หน้า "งานปัจจุบัน" ก่อน</div>
+      </div>`;
+    return;
+  }
+
+  setLoading("historyBox", "กำลังโหลดประวัติ...");
+
+  try {
+    const res = await jsonp("driverTripHistory", { driverId });
+    renderHistory(res);
+  } catch (err) {
+    document.getElementById("historyBox").innerHTML = `
+      <div class="alert alert-danger">
+        <div class="alert-icon">❌</div>
+        <div>โหลดประวัติไม่สำเร็จ: ${h(err.message)}</div>
+      </div>`;
+  }
+}
+
+/* ══════════════════════════════
+   Render history table
+   ══════════════════════════════ */
+function renderHistory(res) {
+  const box = document.getElementById("historyBox");
+
+  if (!res.ok) {
+    box.innerHTML = `
+      <div class="alert alert-danger">
+        <div class="alert-icon">❌</div>
+        <div>${h(res.error || "เกิดข้อผิดพลาด")}</div>
+      </div>`;
+    return;
+  }
+
+  if (!res.trips || !res.trips.length) {
+    box.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">ไม่มีประวัติงาน</div>
+        <div class="empty-desc">ยังไม่มีงานในระบบ</div>
+      </div>`;
+    return;
+  }
+
+  let html = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Trip ID</th>
+            <th>วันที่</th>
+            <th>Order</th>
+            <th>รถ</th>
+            <th>สถานะ</th>
+            <th>ไมล์เริ่ม</th>
+            <th>ไมล์จบ</th>
+            <th>รูปภาพ</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+  res.trips.forEach(t => {
+    const st = (t.status || "").toUpperCase();
+    const badgeClass =
+      st === "ASSIGNED"    ? "badge-assigned" :
+      st === "IN_PROGRESS" ? "badge-progress"  :
+      st === "DELIVERED"   ? "badge-delivered" :
+      "badge-assigned";
+    const badgeLabel =
+      st === "ASSIGNED"    ? "รอรับงาน"     :
+      st === "IN_PROGRESS" ? "กำลังวิ่ง" :
+      st === "DELIVERED"   ? "ส่งแล้ว" :
+      st;
+
+    const photoUrls = String(t.photoUrl || "").split("|").map(s => s.trim()).filter(Boolean);
+    const photoLinks = photoUrls.length
+      ? photoUrls.map((url, i) => `<a href="${h(url)}" target="_blank" class="table-photo-link">รูป${i+1}</a>`).join(" ")
+      : "—";
+
+    html += `
+      <tr>
+        <td class="table-tripid">${h(t.tripId)}</td>
+        <td>${h(t.tripDate || "—")}</td>
+        <td>${h(t.orderId)}</td>
+        <td>${h(t.truckName || t.truckId)}</td>
+        <td><span class="table-badge ${badgeClass}">${badgeLabel}</span></td>
+        <td>${h(t.startOdo || "—")}</td>
+        <td>${h(t.endOdo || "—")}</td>
+        <td>${photoLinks}</td>
+      </tr>`;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>`;
+
+  box.innerHTML = html;
 }
 
 /* ══════════════════════════════
