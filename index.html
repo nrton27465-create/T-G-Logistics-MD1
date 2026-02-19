@@ -629,13 +629,14 @@
 
   <!-- ════════════════ PAGE: HOME ════════════════ -->
   <div id="pageHome" class="page active">
-    <!-- Driver selector card -->
+    <!-- Driver code input card -->
     <div class="card">
       <div class="card-body">
-        <label class="form-label">👤 เลือกชื่อพนักงานขับ</label>
-        <select id="driverId" class="form-select">
-          <option value="">— กำลังโหลดรายชื่อ... —</option>
-        </select>
+        <label class="form-label">🔑 กรอกรหัสพนักงานขับ</label>
+        <input type="text" id="driverCode" class="form-control" 
+               placeholder="เช่น DRV001" 
+               style="text-transform:uppercase;">
+        <div id="driverNameDisplay" style="margin-top:10px; font-size:var(--fs-sm); color:var(--blue-600); font-weight:600; display:none;"></div>
       </div>
       <div class="card-body">
         <button class="btn btn-primary" onclick="loadMyTrips()">
@@ -677,7 +678,7 @@
 /* ═══════════════════════════════════════════════
    👉  ใส่ URL /exec ของ Apps Script ตรงนี้
    ═══════════════════════════════════════════════ */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyL53i6VKAwn6xH7NRFS0HQf0G-1mW3HgaMFXp8-GswSzE_s1Qbyts6KH5alQXOubJt5g/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrdvY55Oj-7BXxGccAIOxR1jxoufcB__f21OvlaUH56SAJfVq2ORJTc4N1xQhxPq35FA/exec";
 
 /* ── STATE ── */
 let DDL = { drivers: [] };
@@ -774,35 +775,21 @@ function setLoading(boxId, msg = "กำลังโหลด...") {
 }
 
 /* ══════════════════════════════
-   Bootstrap (load driver list)
+   Bootstrap (check API connection)
    ══════════════════════════════ */
 async function bootstrap() {
   const isPlaceholder = !SCRIPT_URL || SCRIPT_URL.includes("PASTE_");
   if (isPlaceholder) {
     document.getElementById("configAlert").style.display = "flex";
-    document.getElementById("driverId").innerHTML = `<option value="">ยังไม่ได้ตั้งค่า SCRIPT_URL</option>`;
     return;
   }
 
-  const sel = document.getElementById("driverId");
-  sel.innerHTML = `<option value="">⏳ กำลังโหลดรายชื่อ...</option>`;
-  sel.disabled = true;
-
   try {
-    const data = await jsonp("bootstrap");
-    if (!data.ok) throw new Error(data.error || "bootstrap error");
-
-    DDL = data.ddl || { drivers: [] };
-    sel.innerHTML = `<option value="">— เลือกชื่อพนักงานขับ —</option>` +
-      DDL.drivers.map(d =>
-        `<option value="${h(d.id)}">${h(d.name)}</option>`
-      ).join("");
-    sel.disabled = false;
-
+    const data = await jsonp("ping");
+    if (!data.ok) throw new Error(data.error || "API connection failed");
+    // API is ready
   } catch (err) {
-    sel.innerHTML = `<option value="">⚠️ โหลดไม่ได้</option>`;
-    sel.disabled = false;
-    showToast("โหลดรายชื่อไม่สำเร็จ: " + err.message, "error");
+    showToast("เชื่อมต่อ API ไม่สำเร็จ: " + err.message, "error");
   }
 }
 
@@ -820,15 +807,36 @@ function refreshApp() {
    Load driver's current trips
    ══════════════════════════════ */
 async function loadMyTrips() {
-  const driverId = document.getElementById("driverId").value;
-  if (!driverId) { showToast("กรุณาเลือกชื่อพนักงานขับก่อน", "error"); return; }
+  const driverCodeInput = document.getElementById("driverCode").value.trim().toUpperCase();
+  if (!driverCodeInput) { 
+    showToast("กรุณากรอกรหัสพนักงานขับ", "error"); 
+    return; 
+  }
 
-  CURRENT_DRIVER = driverId;
-  setLoading("listBox", "กำลังโหลดงาน...");
+  setLoading("listBox", "กำลังตรวจสอบรหัส...");
 
   try {
-    const res = await jsonp("driverListMyTrips", { driverId });
+    // Validate driver code first
+    const validateRes = await jsonp("validateDriverCode", { code: driverCodeInput });
+    if (!validateRes.ok) {
+      document.getElementById("listBox").innerHTML = "";
+      showToast(validateRes.error || "รหัสพนักงานไม่ถูกต้อง", "error");
+      return;
+    }
+
+    const driver = validateRes.driver;
+    CURRENT_DRIVER = driver.id;
+
+    // Show driver name
+    const nameDisplay = document.getElementById("driverNameDisplay");
+    nameDisplay.textContent = `✓ ${driver.name} (${driver.code})`;
+    nameDisplay.style.display = "block";
+
+    // Load trips
+    setLoading("listBox", "กำลังโหลดงาน...");
+    const res = await jsonp("driverListMyTrips", { driverId: driver.id });
     renderTrips(res);
+
   } catch (err) {
     document.getElementById("listBox").innerHTML = `
       <div class="alert alert-danger">
@@ -1056,12 +1064,12 @@ async function setDelivered(tripId) {
    Load trip history
    ══════════════════════════════ */
 async function loadHistory() {
-  const driverId = CURRENT_DRIVER || document.getElementById("driverId").value;
+  const driverId = CURRENT_DRIVER;
   if (!driverId) {
     document.getElementById("historyBox").innerHTML = `
       <div class="alert alert-info">
         <div class="alert-icon">ℹ️</div>
-        <div>กรุณาเลือกชื่อพนักงานขับที่หน้า "งานปัจจุบัน" ก่อน</div>
+        <div>กรุณากรอกรหัสพนักงานที่หน้า "งานปัจจุบัน" ก่อน</div>
       </div>`;
     return;
   }
