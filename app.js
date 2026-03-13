@@ -1,16 +1,13 @@
 /* ═══════════════════════════════════════════════
-   Driver App - JavaScript (FIXED - Base64 Upload)
+   Driver App - JavaScript (COMPLETE FIXED VERSION)
    ═══════════════════════════════════════════════ */
 
 // 👉 ใส่ URL /exec ของ Apps Script ตรงนี้
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3zGFS9e3AXj-9_wlkDyspGd7opyfsliVw5ww6r8prAGAI7zfJggXQABP6kHsO3H-NcA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdQTLLkyreVDEgBDcAm1SCMcGOxzjzseNNTR4G9MkWdpo16w03ZYPM88bZD9G1VDUlmQ/exec";
 
 let CURRENT_DRIVER = "";
 let ACT_OPTIONS = { items: [], actions: [], topics: [] };
 
-/* ══════════════════════════════
-   PAGE NAVIGATION
-   ══════════════════════════════ */
 function switchPage(page) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
@@ -34,16 +31,19 @@ function switchPage(page) {
   if (page === "pm") loadPM();
 }
 
-/* ══════════════════════════════
-   JSONP helper
-   ══════════════════════════════ */
 function jsonp(action, params = {}) {
   return new Promise((resolve, reject) => {
     const cb = "cb_" + Math.random().toString(36).slice(2);
     const url = new URL(SCRIPT_URL);
     url.searchParams.set("action", action);
     url.searchParams.set("callback", cb);
-    Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+    
+    Object.keys(params).forEach(k => {
+      const val = params[k];
+      if (val !== null && val !== undefined) {
+        url.searchParams.set(k, String(val));
+      }
+    });
 
     const script = document.createElement("script");
     script.src = url.toString();
@@ -56,20 +56,21 @@ function jsonp(action, params = {}) {
   });
 }
 
-/* ══════════════════════════════
-   Upload file - FIXED: Use Base64 instead of FormData
-   ══════════════════════════════ */
 async function uploadFileToDrive(file, tripId) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async () => {
       try {
         const base64 = reader.result.split(',')[1];
+        
+        showToast("กำลังอัปโหลด...");
+        
         const data = await jsonp("uploadPhotoBase64", {
           tripId: tripId,
           base64: base64,
           filename: file.name
         });
+        
         resolve(data);
       } catch (err) {
         reject(err);
@@ -137,9 +138,6 @@ function refreshApp() {
   showToast("รีเฟรชแล้ว ✓");
 }
 
-/* ══════════════════════════════
-   PAGE 1: งานปัจจุบัน
-   ══════════════════════════════ */
 async function loadMyTrips() {
   const driverCodeInput = document.getElementById("driverCode").value.trim().toUpperCase();
   if (!driverCodeInput) { 
@@ -294,7 +292,11 @@ async function setInProgress(tripId) {
   setCardBusy(tripId, true);
 
   try {
-    const res = await jsonp("driverUpdateStatus", { tripId, status: "IN_PROGRESS", startOdo });
+    const res = await jsonp("driverUpdateStatus", { 
+      tripId: tripId, 
+      status: "IN_PROGRESS", 
+      startOdo: startOdo 
+    });
     if (!res.ok) throw new Error(res.error || "อัปเดตไม่สำเร็จ");
     showToast("รับงานแล้ว 🚀 กำลังออกวิ่ง", "success");
     await loadMyTrips();
@@ -311,13 +313,21 @@ async function setDelivered(tripId) {
   setCardBusy(tripId, true);
 
   try {
+    // Upload photo first if selected
     if (photoInput?.files?.[0]) {
-      showToast("กำลังอัปโหลดรูปภาพ...");
       const uploadRes = await uploadFileToDrive(photoInput.files[0], tripId);
-      if (!uploadRes.ok) throw new Error("อัปโหลดรูปไม่สำเร็จ: " + uploadRes.error);
+      if (!uploadRes.ok) {
+        throw new Error("อัปโหลดรูปไม่สำเร็จ: " + (uploadRes.error || "Unknown error"));
+      }
+      showToast("อัปโหลดรูปสำเร็จ ✓");
     }
 
-    const res = await jsonp("driverUpdateStatus", { tripId, status: "DELIVERED", note });
+    // Update status
+    const res = await jsonp("driverUpdateStatus", { 
+      tripId: tripId, 
+      status: "DELIVERED", 
+      note: note 
+    });
     if (!res.ok) throw new Error(res.error || "อัปเดตไม่สำเร็จ");
 
     showToast("ส่งงานเรียบร้อย ✅ กรุณากลับมาบันทึกไมล์จบที่บริษัท", "success");
@@ -335,7 +345,7 @@ async function saveEndOdo(tripId) {
   setCardBusy(tripId, true);
 
   try {
-    const res = await jsonp("driverSaveEndOdo", { tripId, endOdo });
+    const res = await jsonp("driverSaveEndOdo", { tripId: tripId, endOdo: endOdo });
     if (!res.ok) throw new Error(res.error || "บันทึกไม่สำเร็จ");
     showToast("บันทึกเลขไมล์จบเรียบร้อย 💾", "success");
     await loadMyTrips();
@@ -356,9 +366,6 @@ function setCardBusy(tripId, busy) {
   }
 }
 
-/* ══════════════════════════════
-   PAGE 2: ประวัติงาน
-   ══════════════════════════════ */
 async function loadHistory() {
   const driverId = CURRENT_DRIVER;
   if (!driverId) {
@@ -444,9 +451,6 @@ function renderHistory(res) {
   box.innerHTML = html;
 }
 
-/* ══════════════════════════════
-   PAGE 3: สรุป
-   ══════════════════════════════ */
 async function loadSummary() {
   const driverId = CURRENT_DRIVER;
   if (!driverId) {
@@ -534,9 +538,6 @@ function renderSummary(res) {
   box.innerHTML = html;
 }
 
-/* ══════════════════════════════
-   PAGE 4: PM Plan
-   ══════════════════════════════ */
 async function loadPM() {
   const driverId = CURRENT_DRIVER;
   if (!driverId) {
@@ -605,9 +606,6 @@ function renderPM(res) {
   box.innerHTML = html;
 }
 
-/* ══════════════════════════════
-   PAGE 5: ACT PLAN
-   ══════════════════════════════ */
 async function saveACTPlan() {
   const driverId = CURRENT_DRIVER;
   if (!driverId) {
@@ -644,9 +642,6 @@ async function saveACTPlan() {
   }
 }
 
-/* ══════════════════════════════
-   PAGE 6: แจ้งซ่อม
-   ══════════════════════════════ */
 function previewRepairFile() {
   const input = document.getElementById("repairFile");
   const preview = document.getElementById("repairPreview");
@@ -687,11 +682,13 @@ async function saveRepairReport() {
     let fileUrl = "";
     
     if (fileInput?.files?.[0]) {
-      showToast("กำลังอัปโหลดไฟล์...");
       const repairTripId = `repair_${driverId}_${Date.now()}`;
       const uploadRes = await uploadFileToDrive(fileInput.files[0], repairTripId);
-      if (!uploadRes.ok) throw new Error("อัปโหลดไฟล์ไม่สำเร็จ: " + uploadRes.error);
+      if (!uploadRes.ok) {
+        throw new Error("อัปโหลดไฟล์ไม่สำเร็จ: " + (uploadRes.error || "Unknown error"));
+      }
       fileUrl = uploadRes.fileUrl || "";
+      showToast("อัปโหลดไฟล์สำเร็จ ✓");
     }
 
     const res = await jsonp("saveRepairReport", { driverId, odo, topic, detail, fileUrl });
@@ -710,7 +707,4 @@ async function saveRepairReport() {
   }
 }
 
-/* ══════════════════════════════
-   Init
-   ══════════════════════════════ */
 window.addEventListener("load", bootstrap);
