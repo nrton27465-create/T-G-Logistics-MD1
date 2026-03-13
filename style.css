@@ -49,89 +49,22 @@ body {
   overflow-x: hidden;
 }
 
-/* ─── HEADER ─── */
+/* ─── HEADER (HIDDEN - replaced by top nav) ─── */
 .app-header {
-  background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-700) 100%);
-  padding: env(safe-area-inset-top, 0) 0 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: var(--shadow-lg);
+  display: none;
 }
 
-.header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-}
-
-.header-brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.header-icon {
-  width: 56px;
-  height: 56px;
-  background: rgba(255,255,255,.15);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-  backdrop-filter: blur(8px);
-}
-
-.header-title {
-  font-size: var(--fs-lg);
-  font-weight: 800;
-  color: var(--white);
-  line-height: 1.1;
-  letter-spacing: -0.5px;
-}
-
-.header-sub {
-  font-size: var(--fs-xs);
-  color: var(--blue-300);
-  font-weight: 400;
-  margin-top: 2px;
-}
-
-.btn-refresh {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.12);
-  border: 1.5px solid rgba(255,255,255,.25);
-  color: white;
-  font-size: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all .2s;
-  backdrop-filter: blur(8px);
-  flex-shrink: 0;
-}
-
-.btn-refresh:active {
-  transform: scale(.9);
-  background: rgba(255,255,255,.22);
-}
-
-/* ─── BOTTOM NAV (2 ROWS) ─── */
+/* ─── TOP NAV (2 ROWS) - เปลี่ยนจาก bottom เป็น top ─── */
 .bottom-nav {
   position: fixed;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
   background: var(--white);
-  border-top: 1.5px solid var(--blue-100);
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  border-bottom: 1.5px solid var(--blue-100);
+  padding-top: env(safe-area-inset-top, 0);
   z-index: 99;
-  box-shadow: 0 -4px 20px rgba(3,23,74,.08);
+  box-shadow: 0 4px 20px rgba(3,23,74,.08);
 }
 
 .nav-row {
@@ -176,7 +109,8 @@ body {
   padding: 24px 20px;
   max-width: 640px;
   margin: 0 auto;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0) + 140px);
+  padding-top: calc(env(safe-area-inset-top, 0) + 140px);
+  padding-bottom: 24px;
 }
 
 .page {
@@ -597,7 +531,7 @@ body {
 /* ─── TOAST ─── */
 .toast-container {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 0) + 140px);
+  bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
