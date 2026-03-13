@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════
-   Driver App - JavaScript
+   Driver App - JavaScript (FIXED - Base64 Upload)
    ═══════════════════════════════════════════════ */
 
 // 👉 ใส่ URL /exec ของ Apps Script ตรงนี้
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxx8nzsjAP16zpVJ68EemNzn6wiN6hPT193eoBwd8S-8XncjdbSExCzeILHoupGSq6_Vg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3zGFS9e3AXj-9_wlkDyspGd7opyfsliVw5ww6r8prAGAI7zfJggXQABP6kHsO3H-NcA/exec";
 
 let CURRENT_DRIVER = "";
 let ACT_OPTIONS = { items: [], actions: [], topics: [] };
@@ -57,17 +57,27 @@ function jsonp(action, params = {}) {
 }
 
 /* ══════════════════════════════
-   Upload file to Drive
+   Upload file - FIXED: Use Base64 instead of FormData
    ══════════════════════════════ */
-async function uploadFileToDrive(file, prefix) {
-  const formData = new FormData();
-  formData.append("action", "uploadPhoto");
-  formData.append("tripId", `${prefix}_${Date.now()}`);
-  formData.append("photo", file, file.name);
-
-  const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
-  const data = await res.json();
-  return data;
+async function uploadFileToDrive(file, tripId) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64 = reader.result.split(',')[1];
+        const data = await jsonp("uploadPhotoBase64", {
+          tripId: tripId,
+          base64: base64,
+          filename: file.name
+        });
+        resolve(data);
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.onerror = () => reject(new Error("ไม่สามารถอ่านไฟล์ได้"));
+    reader.readAsDataURL(file);
+  });
 }
 
 function h(s) {
@@ -678,7 +688,8 @@ async function saveRepairReport() {
     
     if (fileInput?.files?.[0]) {
       showToast("กำลังอัปโหลดไฟล์...");
-      const uploadRes = await uploadFileToDrive(fileInput.files[0], `repair_${driverId}`);
+      const repairTripId = `repair_${driverId}_${Date.now()}`;
+      const uploadRes = await uploadFileToDrive(fileInput.files[0], repairTripId);
       if (!uploadRes.ok) throw new Error("อัปโหลดไฟล์ไม่สำเร็จ: " + uploadRes.error);
       fileUrl = uploadRes.fileUrl || "";
     }
