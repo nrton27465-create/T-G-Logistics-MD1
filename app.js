@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════ */
 
 // 👉 ใส่ URL /exec ของ Apps Script ตรงนี้
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztXLliwTgcoL7sop46vrBuh4z7JRK4fHCN-fA444rxL-AM2WPJZzJbUQOIFKVrcF0C5Q/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1rncYnZICBWxRvN84jWIQJwDQE-FdZ32b5eISMSDapAs-OxipyIrtcYcv37IxW_fV9w/exec";
 
 let CURRENT_DRIVER = "";
 let ACT_OPTIONS = { items: [], actions: [], topics: [] };
@@ -641,7 +641,7 @@ async function saveACTPlan() {
   const date = document.getElementById("actDate").value;
   const odo = document.getElementById("actOdo").value;
   const item = document.getElementById("actItem").value.trim();
-  const action = document.getElementById("actAction").value.trim();
+  const actAction = document.getElementById("actAction").value.trim();
   const additional = document.getElementById("actAdditional").value.trim();
   const cost = document.getElementById("actCost").value;
 
@@ -652,15 +652,15 @@ async function saveACTPlan() {
   btn.textContent = "⏳ กำลังบันทึก...";
 
   try {
-    // Save to sheet
-    console.log("Sending ACT Plan data:", { driverId, date, odo, item, action, additional, cost });
+    // Save to sheet - ใช้ actAction แทน action เพื่อไม่ให้ชนกับ API action
+    console.log("Sending ACT Plan data:", { driverId, date, odo, item, actAction, additional, cost });
     
     const res = await jsonp("saveACTPlan", { 
       driverId: driverId,
       date: date,
       odo: odo,
       item: item,
-      action: action,
+      actAction: actAction,
       additional: additional,
       cost: cost
     });
@@ -669,19 +669,17 @@ async function saveACTPlan() {
 
     // Check if really successful
     if (res.ok) {
-      showToast("บันทึกข้อมูลสำเร็จ ✅ (Row: " + (res.rowsAfter || "?") + ")", "success");
-    } else {
-      showToast("เกิดข้อผิดพลาด: " + (res.error || "ไม่ทราบสาเหตุ"), "error");
-    }
-    
-    // Clear form only if success
-    if (res.ok) {
+      showToast("บันทึกข้อมูลสำเร็จ ✅", "success");
+      
+      // Clear form
       document.getElementById("actDate").value = "";
       document.getElementById("actOdo").value = "";
       document.getElementById("actItem").value = "";
       document.getElementById("actAction").value = "";
       document.getElementById("actAdditional").value = "";
       document.getElementById("actCost").value = "";
+    } else {
+      showToast("เกิดข้อผิดพลาด: " + (res.error || "ไม่ทราบสาเหตุ"), "error");
     }
 
   } catch (err) {
