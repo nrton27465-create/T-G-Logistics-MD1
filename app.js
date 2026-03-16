@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════ */
 
 // 👉 ใส่ URL /exec ของ Apps Script ตรงนี้
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyv0pPHhSi40xb8cfYyVFEs6lQWHaGo1zqHrLdMz_dYAeunpHf-fuzs5PbgjWzIvvcJw/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8BFBOS0E08swmz5shAUqKbzz2zTRsGff1ZUQlasfCKI6OmNG52F1z6sIIytKG2RxjJA/exec";
 
 let CURRENT_DRIVER = "";
 let ACT_OPTIONS = { items: [], actions: [], topics: [] };
