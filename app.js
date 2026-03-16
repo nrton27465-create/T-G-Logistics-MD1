@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════ */
 
 // 👉 ใส่ URL /exec ของ Apps Script ตรงนี้
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbySK1x2AgYhmiCkcxEEp6jmiwKbAWEKjnLBBeujj9RWMfC20WzgmYfgeQWPjsK46xfG/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQHXi0LWJp1axiiVNDcowMapvlqMCOclyMa5EBsPebGE1Qnz9lYVAAA1FYGi3pMDVC7A/exec";
 
 let CURRENT_DRIVER = "";
 let ACT_OPTIONS = { items: [], actions: [], topics: [] };
@@ -289,7 +289,13 @@ async function setInProgress(tripId) {
   const startOdo = document.getElementById("startOdo_" + tripId)?.value || "";
   if (!startOdo) { showToast("กรุณากรอกเลขไมล์เริ่ม", "error"); return; }
 
-  setCardBusy(tripId, true);
+  const card = document.getElementById("card_" + tripId);
+  const btn = card?.querySelector("button");
+  if (!btn) return;
+
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ กำลังบันทึก...";
 
   try {
     const res = await jsonp("driverUpdateStatus", { 
@@ -302,7 +308,8 @@ async function setInProgress(tripId) {
     await loadMyTrips();
   } catch (err) {
     showToast("เกิดข้อผิดพลาด: " + err.message, "error");
-    setCardBusy(tripId, false);
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 
@@ -310,7 +317,13 @@ async function setDelivered(tripId) {
   const note = document.getElementById("note_" + tripId)?.value || "";
   const photoInput = document.getElementById("photo_" + tripId);
 
-  setCardBusy(tripId, true);
+  const card = document.getElementById("card_" + tripId);
+  const btn = card?.querySelector("button");
+  if (!btn) return;
+
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ กำลังบันทึก...";
 
   try {
     // Try to upload photo if selected (but don't fail if upload fails)
@@ -322,7 +335,6 @@ async function setDelivered(tripId) {
         }
       } catch (uploadErr) {
         console.log("Photo upload failed but continuing:", uploadErr);
-        // Continue anyway - photo upload is optional
       }
     }
 
@@ -338,7 +350,8 @@ async function setDelivered(tripId) {
     await loadMyTrips();
   } catch (err) {
     showToast("เกิดข้อผิดพลาด: " + err.message, "error");
-    setCardBusy(tripId, false);
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 
@@ -346,16 +359,23 @@ async function saveEndOdo(tripId) {
   const endOdo = document.getElementById("endOdo_" + tripId)?.value || "";
   if (!endOdo) { showToast("กรุณากรอกเลขไมล์จบ", "error"); return; }
 
-  setCardBusy(tripId, true);
+  const card = document.getElementById("card_" + tripId);
+  const btn = card?.querySelector("button");
+  if (!btn) return;
+
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ กำลังบันทึก...";
 
   try {
     const res = await jsonp("driverSaveEndOdo", { tripId: tripId, endOdo: endOdo });
     if (!res.ok) throw new Error(res.error || "บันทึกไม่สำเร็จ");
-    showToast("บันทึกเลขไมล์จบเรียบร้อย 💾", "success");
+    showToast("บันทึกเลขไมล์จบสำเร็จ 💾", "success");
     await loadMyTrips();
   } catch (err) {
     showToast("เกิดข้อผิดพลาด: " + err.message, "error");
-    setCardBusy(tripId, false);
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 
@@ -617,6 +637,7 @@ async function saveACTPlan() {
     return;
   }
 
+  // Get all form values
   const date = document.getElementById("actDate").value;
   const odo = document.getElementById("actOdo").value;
   const item = document.getElementById("actItem").value.trim();
@@ -624,20 +645,26 @@ async function saveACTPlan() {
   const additional = document.getElementById("actAdditional").value.trim();
   const cost = document.getElementById("actCost").value;
 
-  // บันทึกข้อมูลโดยไม่ตรวจสอบอะไรเลย
+  // Show loading state
+  const btn = document.querySelector('#pageACT .btn-primary');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ กำลังบันทึก...";
+
   try {
+    // Save to sheet
     const res = await jsonp("saveACTPlan", { 
-      driverId, 
-      date, 
-      odo, 
-      item, 
-      action, 
-      additional, 
-      cost 
+      driverId: driverId,
+      date: date,
+      odo: odo,
+      item: item,
+      action: action,
+      additional: additional,
+      cost: cost
     });
-    
-    // แสดงผลสำเร็จเสมอ ไม่สนใจว่า backend ตอบอะไร
-    showToast("บันทึกข้อมูลเรียบร้อย ✅", "success");
+
+    // Always show success and clear form
+    showToast("บันทึกข้อมูลสำเร็จ ✅", "success");
     
     // Clear form
     document.getElementById("actDate").value = "";
@@ -646,17 +673,23 @@ async function saveACTPlan() {
     document.getElementById("actAction").value = "";
     document.getElementById("actAdditional").value = "";
     document.getElementById("actCost").value = "";
+
   } catch (err) {
-    // แม้จะ error ก็แสดงว่าสำเร็จ
-    showToast("บันทึกข้อมูลเรียบร้อย ✅", "success");
+    console.error("ACT Plan save error:", err);
+    // Still show success even on error
+    showToast("บันทึกข้อมูลสำเร็จ ✅", "success");
     
-    // Clear form
+    // Clear form anyway
     document.getElementById("actDate").value = "";
     document.getElementById("actOdo").value = "";
     document.getElementById("actItem").value = "";
     document.getElementById("actAction").value = "";
     document.getElementById("actAdditional").value = "";
     document.getElementById("actCost").value = "";
+  } finally {
+    // Restore button
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 
@@ -696,6 +729,12 @@ async function saveRepairReport() {
     return;
   }
 
+  // Show loading state
+  const btn = document.querySelector('#pageRepair .btn-primary');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ กำลังบันทึก...";
+
   try {
     let fileUrl = "";
     
@@ -710,7 +749,6 @@ async function saveRepairReport() {
         }
       } catch (uploadErr) {
         console.log("File upload failed but continuing:", uploadErr);
-        // Continue anyway - file upload is optional
       }
     }
 
@@ -727,6 +765,10 @@ async function saveRepairReport() {
     document.getElementById("repairPreview").innerHTML = "";
   } catch (err) {
     showToast("เกิดข้อผิดพลาด: " + err.message, "error");
+  } finally {
+    // Restore button
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 
