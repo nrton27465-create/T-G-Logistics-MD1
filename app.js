@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════ */
 
 // 👉 ใส่ URL /exec ของ Apps Script ตรงนี้
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8BFBOS0E08swmz5shAUqKbzz2zTRsGff1ZUQlasfCKI6OmNG52F1z6sIIytKG2RxjJA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwcD_eRolkQWiOo-2mRP4VfV3tx4kik1-oSny2n-d1-x2k-k5w65YsOfkdaCZ6nwsLwYQ/exec";
 
 let CURRENT_DRIVER = "";
 let ACT_OPTIONS = { items: [], actions: [], topics: [] };
@@ -113,17 +113,20 @@ function setLoading(boxId, msg = "กำลังโหลด...") {
 async function bootstrap() {
   if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_SCRIPT")) {
     document.getElementById("configAlert").style.display = "flex";
-     document.getElementById("actItem").innerHTML =
-  '<option value="">-- เลือกรายการ --</option>' +
-  actRes.items.map(i => `<option value="${h(i)}">${h(i)}</option>`).join("");
-
-document.getElementById("actAction").innerHTML =
-  '<option value="">-- เลือก Action --</option>' +
-  actRes.actions.map(a => `<option value="${h(a)}">${h(a)}</option>`).join("");
     return;
   }
-  // ลบ getACTOptions ออกได้เลย เพราะ options อยู่ใน HTML แล้ว
-  // หรือจะเก็บไว้ก็ได้ไม่กระทบอะไร
+
+  try {
+    const actRes = await jsonp("getACTOptions");
+    if (actRes.ok) {
+      ACT_OPTIONS = actRes;
+      document.getElementById("actItemList").innerHTML = actRes.items.map(i => `<option value="${h(i)}">`).join("");
+      document.getElementById("actActionList").innerHTML = actRes.actions.map(a => `<option value="${h(a)}">`).join("");
+      document.getElementById("repairTopicList").innerHTML = actRes.topics.map(t => `<option value="${h(t)}">`).join("");
+    }
+  } catch (err) {
+    console.error("Bootstrap error:", err);
+  }
 }
 
 function refreshApp() {
@@ -135,12 +138,11 @@ function refreshApp() {
   showToast("รีเฟรชแล้ว ✓");
 }
 
-// แก้ส่วนนี้ใน loadMyTrips — ส่ง driverCode ไปให้ validate แล้วได้ driverId กลับมา
 async function loadMyTrips() {
   const driverCodeInput = document.getElementById("driverCode").value.trim().toUpperCase();
-  if (!driverCodeInput) {
-    showToast("กรุณากรอกรหัสพนักงานขับ", "error");
-    return;
+  if (!driverCodeInput) { 
+    showToast("กรุณากรอกรหัสพนักงานขับ", "error"); 
+    return; 
   }
 
   setLoading("listBox", "กำลังตรวจสอบรหัส...");
@@ -154,10 +156,10 @@ async function loadMyTrips() {
     }
 
     const driver = validateRes.driver;
-    CURRENT_DRIVER = driver.id;   // เก็บ driverId (เช่น DRV-001)
+    CURRENT_DRIVER = driver.id;
 
     const nameDisplay = document.getElementById("driverNameDisplay");
-    nameDisplay.textContent = "✓ " + driver.name + " (" + driver.code + ")";
+    nameDisplay.textContent = `✓ ${driver.name} (${driver.code})`;
     nameDisplay.style.display = "block";
 
     setLoading("listBox", "กำลังโหลดงาน...");
@@ -165,8 +167,11 @@ async function loadMyTrips() {
     renderTrips(res);
 
   } catch (err) {
-    document.getElementById("listBox").innerHTML =
-      '<div class="alert alert-danger"><div class="alert-icon">❌</div><div>โหลดงานไม่สำเร็จ: ' + h(err.message) + '</div></div>';
+    document.getElementById("listBox").innerHTML = `
+      <div class="alert alert-danger">
+        <div class="alert-icon">❌</div>
+        <div>โหลดงานไม่สำเร็จ: ${h(err.message)}</div>
+      </div>`;
   }
 }
 
@@ -632,40 +637,56 @@ async function saveACTPlan() {
     return;
   }
 
-  const date       = document.getElementById("actDate").value;
-  const odo        = document.getElementById("actOdo").value;
-  const item       = document.getElementById("actItem").value;
-  const actAction  = document.getElementById("actAction").value;
+  // Get all form values
+  const date = document.getElementById("actDate").value;
+  const odo = document.getElementById("actOdo").value;
+  const item = document.getElementById("actItem").value.trim();
+  const actAction = document.getElementById("actAction").value.trim();
   const additional = document.getElementById("actAdditional").value.trim();
-  const cost       = document.getElementById("actCost").value;
+  const cost = document.getElementById("actCost").value;
 
-  if (!item)      { showToast("กรุณาเลือกรายการ", "error");   return; }
-  if (!actAction) { showToast("กรุณาเลือก Action", "error");  return; }
-
+  // Show loading state
   const btn = document.querySelector('#pageACT .btn-primary');
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.textContent = "⏳ กำลังบันทึก...";
 
   try {
-    const res = await jsonp("saveACTPlan", {
-      driverId, date, odo, item, actAction, additional, cost
+    // Save to sheet - ใช้ actAction แทน action เพื่อไม่ให้ชนกับ API action
+    console.log("Sending ACT Plan data:", { driverId, date, odo, item, actAction, additional, cost });
+    
+    const res = await jsonp("saveACTPlan", { 
+      driverId: driverId,
+      date: date,
+      odo: odo,
+      item: item,
+      actAction: actAction,
+      additional: additional,
+      cost: cost
     });
 
+    console.log("Backend response:", res);
+
+    // Check if really successful
     if (res.ok) {
       showToast("บันทึกข้อมูลสำเร็จ ✅", "success");
-      document.getElementById("actDate").value       = "";
-      document.getElementById("actOdo").value        = "";
-      document.getElementById("actItem").value       = "";
-      document.getElementById("actAction").value     = "";
+      
+      // Clear form
+      document.getElementById("actDate").value = "";
+      document.getElementById("actOdo").value = "";
+      document.getElementById("actItem").value = "";
+      document.getElementById("actAction").value = "";
       document.getElementById("actAdditional").value = "";
-      document.getElementById("actCost").value       = "";
+      document.getElementById("actCost").value = "";
     } else {
       showToast("เกิดข้อผิดพลาด: " + (res.error || "ไม่ทราบสาเหตุ"), "error");
     }
+
   } catch (err) {
+    console.error("ACT Plan save error:", err);
     showToast("เกิดข้อผิดพลาด: " + err.message, "error");
   } finally {
+    // Restore button
     btn.disabled = false;
     btn.textContent = originalText;
   }
