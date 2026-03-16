@@ -115,18 +115,8 @@ async function bootstrap() {
     document.getElementById("configAlert").style.display = "flex";
     return;
   }
-
-  try {
-    const actRes = await jsonp("getACTOptions");
-    if (actRes.ok) {
-      ACT_OPTIONS = actRes;
-      document.getElementById("actItemList").innerHTML = actRes.items.map(i => `<option value="${h(i)}">`).join("");
-      document.getElementById("actActionList").innerHTML = actRes.actions.map(a => `<option value="${h(a)}">`).join("");
-      document.getElementById("repairTopicList").innerHTML = actRes.topics.map(t => `<option value="${h(t)}">`).join("");
-    }
-  } catch (err) {
-    console.error("Bootstrap error:", err);
-  }
+  // ลบ getACTOptions ออกได้เลย เพราะ options อยู่ใน HTML แล้ว
+  // หรือจะเก็บไว้ก็ได้ไม่กระทบอะไร
 }
 
 function refreshApp() {
@@ -635,56 +625,40 @@ async function saveACTPlan() {
     return;
   }
 
-  // Get all form values
-  const date = document.getElementById("actDate").value;
-  const odo = document.getElementById("actOdo").value;
-  const item = document.getElementById("actItem").value.trim();
-  const actAction = document.getElementById("actAction").value.trim();
+  const date       = document.getElementById("actDate").value;
+  const odo        = document.getElementById("actOdo").value;
+  const item       = document.getElementById("actItem").value;
+  const actAction  = document.getElementById("actAction").value;
   const additional = document.getElementById("actAdditional").value.trim();
-  const cost = document.getElementById("actCost").value;
+  const cost       = document.getElementById("actCost").value;
 
-  // Show loading state
+  if (!item)      { showToast("กรุณาเลือกรายการ", "error");   return; }
+  if (!actAction) { showToast("กรุณาเลือก Action", "error");  return; }
+
   const btn = document.querySelector('#pageACT .btn-primary');
   const originalText = btn.textContent;
   btn.disabled = true;
   btn.textContent = "⏳ กำลังบันทึก...";
 
   try {
-    // Save to sheet - ใช้ actAction แทน action เพื่อไม่ให้ชนกับ API action
-    console.log("Sending ACT Plan data:", { driverId, date, odo, item, actAction, additional, cost });
-    
-    const res = await jsonp("saveACTPlan", { 
-      driverId: driverId,
-      date: date,
-      odo: odo,
-      item: item,
-      actAction: actAction,
-      additional: additional,
-      cost: cost
+    const res = await jsonp("saveACTPlan", {
+      driverId, date, odo, item, actAction, additional, cost
     });
 
-    console.log("Backend response:", res);
-
-    // Check if really successful
     if (res.ok) {
       showToast("บันทึกข้อมูลสำเร็จ ✅", "success");
-      
-      // Clear form
-      document.getElementById("actDate").value = "";
-      document.getElementById("actOdo").value = "";
-      document.getElementById("actItem").value = "";
-      document.getElementById("actAction").value = "";
+      document.getElementById("actDate").value       = "";
+      document.getElementById("actOdo").value        = "";
+      document.getElementById("actItem").value       = "";
+      document.getElementById("actAction").value     = "";
       document.getElementById("actAdditional").value = "";
-      document.getElementById("actCost").value = "";
+      document.getElementById("actCost").value       = "";
     } else {
       showToast("เกิดข้อผิดพลาด: " + (res.error || "ไม่ทราบสาเหตุ"), "error");
     }
-
   } catch (err) {
-    console.error("ACT Plan save error:", err);
     showToast("เกิดข้อผิดพลาด: " + err.message, "error");
   } finally {
-    // Restore button
     btn.disabled = false;
     btn.textContent = originalText;
   }
