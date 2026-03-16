@@ -113,6 +113,13 @@ function setLoading(boxId, msg = "กำลังโหลด...") {
 async function bootstrap() {
   if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_SCRIPT")) {
     document.getElementById("configAlert").style.display = "flex";
+     document.getElementById("actItem").innerHTML =
+  '<option value="">-- เลือกรายการ --</option>' +
+  actRes.items.map(i => `<option value="${h(i)}">${h(i)}</option>`).join("");
+
+document.getElementById("actAction").innerHTML =
+  '<option value="">-- เลือก Action --</option>' +
+  actRes.actions.map(a => `<option value="${h(a)}">${h(a)}</option>`).join("");
     return;
   }
   // ลบ getACTOptions ออกได้เลย เพราะ options อยู่ใน HTML แล้ว
