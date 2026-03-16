@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════ */
 
 // 👉 ใส่ URL /exec ของ Apps Script ตรงนี้
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQHXi0LWJp1axiiVNDcowMapvlqMCOclyMa5EBsPebGE1Qnz9lYVAAA1FYGi3pMDVC7A/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztXLliwTgcoL7sop46vrBuh4z7JRK4fHCN-fA444rxL-AM2WPJZzJbUQOIFKVrcF0C5Q/exec";
 
 let CURRENT_DRIVER = "";
 let ACT_OPTIONS = { items: [], actions: [], topics: [] };
@@ -653,6 +653,8 @@ async function saveACTPlan() {
 
   try {
     // Save to sheet
+    console.log("Sending ACT Plan data:", { driverId, date, odo, item, action, additional, cost });
+    
     const res = await jsonp("saveACTPlan", { 
       driverId: driverId,
       date: date,
@@ -663,29 +665,28 @@ async function saveACTPlan() {
       cost: cost
     });
 
-    // Always show success and clear form
-    showToast("บันทึกข้อมูลสำเร็จ ✅", "success");
+    console.log("Backend response:", res);
+
+    // Check if really successful
+    if (res.ok) {
+      showToast("บันทึกข้อมูลสำเร็จ ✅ (Row: " + (res.rowsAfter || "?") + ")", "success");
+    } else {
+      showToast("เกิดข้อผิดพลาด: " + (res.error || "ไม่ทราบสาเหตุ"), "error");
+    }
     
-    // Clear form
-    document.getElementById("actDate").value = "";
-    document.getElementById("actOdo").value = "";
-    document.getElementById("actItem").value = "";
-    document.getElementById("actAction").value = "";
-    document.getElementById("actAdditional").value = "";
-    document.getElementById("actCost").value = "";
+    // Clear form only if success
+    if (res.ok) {
+      document.getElementById("actDate").value = "";
+      document.getElementById("actOdo").value = "";
+      document.getElementById("actItem").value = "";
+      document.getElementById("actAction").value = "";
+      document.getElementById("actAdditional").value = "";
+      document.getElementById("actCost").value = "";
+    }
 
   } catch (err) {
     console.error("ACT Plan save error:", err);
-    // Still show success even on error
-    showToast("บันทึกข้อมูลสำเร็จ ✅", "success");
-    
-    // Clear form anyway
-    document.getElementById("actDate").value = "";
-    document.getElementById("actOdo").value = "";
-    document.getElementById("actItem").value = "";
-    document.getElementById("actAction").value = "";
-    document.getElementById("actAdditional").value = "";
-    document.getElementById("actCost").value = "";
+    showToast("เกิดข้อผิดพลาด: " + err.message, "error");
   } finally {
     // Restore button
     btn.disabled = false;
