@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════ */
 
 // 👉 ใส่ URL /exec ของ Apps Script ตรงนี้
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1rncYnZICBWxRvN84jWIQJwDQE-FdZ32b5eISMSDapAs-OxipyIrtcYcv37IxW_fV9w/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9xV8QuNGiFaUhzUIiTj0Bug7Sy5WyUXpOrdb5U2CAEcJZmA-GBNSGpJPOpjST2RtgXw/exec";
 
 let CURRENT_DRIVER = "";
 let ACT_OPTIONS = { items: [], actions: [], topics: [] };
@@ -138,11 +138,12 @@ function refreshApp() {
   showToast("รีเฟรชแล้ว ✓");
 }
 
+// แก้ส่วนนี้ใน loadMyTrips — ส่ง driverCode ไปให้ validate แล้วได้ driverId กลับมา
 async function loadMyTrips() {
   const driverCodeInput = document.getElementById("driverCode").value.trim().toUpperCase();
-  if (!driverCodeInput) { 
-    showToast("กรุณากรอกรหัสพนักงานขับ", "error"); 
-    return; 
+  if (!driverCodeInput) {
+    showToast("กรุณากรอกรหัสพนักงานขับ", "error");
+    return;
   }
 
   setLoading("listBox", "กำลังตรวจสอบรหัส...");
@@ -156,10 +157,10 @@ async function loadMyTrips() {
     }
 
     const driver = validateRes.driver;
-    CURRENT_DRIVER = driver.id;
+    CURRENT_DRIVER = driver.id;   // เก็บ driverId (เช่น DRV-001)
 
     const nameDisplay = document.getElementById("driverNameDisplay");
-    nameDisplay.textContent = `✓ ${driver.name} (${driver.code})`;
+    nameDisplay.textContent = "✓ " + driver.name + " (" + driver.code + ")";
     nameDisplay.style.display = "block";
 
     setLoading("listBox", "กำลังโหลดงาน...");
@@ -167,11 +168,8 @@ async function loadMyTrips() {
     renderTrips(res);
 
   } catch (err) {
-    document.getElementById("listBox").innerHTML = `
-      <div class="alert alert-danger">
-        <div class="alert-icon">❌</div>
-        <div>โหลดงานไม่สำเร็จ: ${h(err.message)}</div>
-      </div>`;
+    document.getElementById("listBox").innerHTML =
+      '<div class="alert alert-danger"><div class="alert-icon">❌</div><div>โหลดงานไม่สำเร็จ: ' + h(err.message) + '</div></div>';
   }
 }
 
